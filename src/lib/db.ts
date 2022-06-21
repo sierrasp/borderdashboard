@@ -1,7 +1,8 @@
 /** Imports */
 import 'dotenv/config'
 import fs from "fs";
-import { Pool } from "pg";
+import pkg from 'pg';
+const { Pool } = pkg;
 export default class db {
   static SECRET_PASS = process.env.SECRET_PASS;
   static SECRET_USER = process.env.SECRET_USER;
