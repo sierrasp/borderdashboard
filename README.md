@@ -5,7 +5,7 @@ A skeleton for the Border Dashboard project
 
 
 
-## Environment Variables
+## Environment Variables 🧰
 
 To run this project, you will need to add the following environment variables to your .env file
 
@@ -15,7 +15,7 @@ To run this project, you will need to add the following environment variables to
 `SECRET_DATABASE`
 
 
-## Deployment 
+## Deployment :rocket:
 
 To deploy this project run 
 
@@ -25,12 +25,12 @@ To deploy this project run
 ```
 
 
-## Installation
+## Installation 🛠
 
 Install Border Dashboard with GitHub
 
 ```bash
-  git clone 'sethmorton/BorderDashboardSkeleton'
+  git clone 'https://github.com/sethmorton/BorderDashboardSkeleton.git'
   cd BorderDashboardSkeleton
 ```
     
