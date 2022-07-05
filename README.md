@@ -33,4 +33,8 @@ Install Border Dashboard with GitHub
   git clone 'https://github.com/sethmorton/BorderDashboardSkeleton.git'
   cd BorderDashboardSkeleton
 ```
+
+## Conventions 📝
+
+Naming conventions based off Javascript Naming Conventions: [https://github.com/ktaranov/naming-convention/blob/master/JavaScript%20Name%20and%20Coding%20Conventions.md]
     
