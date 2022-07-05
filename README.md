@@ -36,5 +36,5 @@ Install Border Dashboard with GitHub
 
 ## Conventions 📝
 
-Naming conventions based off Javascript Naming Conventions: [https://github.com/ktaranov/naming-convention/blob/master/JavaScript%20Name%20and%20Coding%20Conventions.md]
+Naming conventions based off [Javascript Naming Conventions](https://github.com/ktaranov/naming-convention/blob/master/JavaScript%20Name%20and%20Coding%20Conventions.md)
     
