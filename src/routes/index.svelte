@@ -1,4 +1,10 @@
 <script lang="ts">
+	import {onMount} from 'svelte';
+	import { Helper } from '$lib/helpers/helper';
+	onMount(async() => {
+		let helper = new Helper("2019-01-01", "2020-12-01", "mexicoBorderID", "San Ysidro");
+		console.log(await helper.filterCrossingsPorts())
+	})
 	async function fetchData() {
 		const res = await fetch('./data.json');
 		const { rows } = await res.json();
