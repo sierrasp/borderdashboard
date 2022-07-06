@@ -1,7 +1,7 @@
 
-# Border Dashboard - Skeleton ☠
+# Border Dashboard ℹ️
 
-A skeleton for the Border Dashboard project
+Border Dashboard Project - 2022
 
 
 
@@ -37,4 +37,7 @@ Install Border Dashboard with GitHub
 ## Conventions 📝
 
 Naming conventions based off [Javascript Naming Conventions](https://github.com/ktaranov/naming-convention/blob/master/JavaScript%20Name%20and%20Coding%20Conventions.md)
+
+## Author ✍️
+Seth
     
