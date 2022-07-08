@@ -2,11 +2,12 @@
 	import {onMount} from 'svelte';
 	import { Helper } from '$lib/helpers/helper';
 	onMount(async() => {
-		let helper = new Helper("2019-01-01", "2020-12-01", "mexicoBorderID", "San Ysidro");
-		console.log(await helper.filterCrossingsPorts())
-	})
+		let helper = new Helper("2017-01-01", "2017-12-31", "San Ysidro");
+		console.log(await helper.calculateCrossings(["Pedestrians", "Buses", "Trains", "Vehicles", "Personal Vehicles"]));
+
+	});
 	async function fetchData() {
-		const res = await fetch('./data.json');
+		const res = await fetch('./controller.json');
 		const { rows } = await res.json();
 
 		if (res.ok) {
@@ -25,7 +26,15 @@
 				<h1 class="display-4">Smart Border Dashboard</h1>
 				<p>The</p>
 			</div>
-			
+			{#await fetchData()}
+			<p>loading</p>
+		  {:then items}
+			{#each items as item}
+			  <li>{item.value}. {item.date}</li>
+			{/each}
+		  {:catch error}
+			<p style="color: red">{error.message}</p>
+		  {/await}
 		  </div>
 		  		<div class="d-flex flex-row-reverse justify-content-around">
 			<div>

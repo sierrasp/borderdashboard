@@ -8,24 +8,24 @@ export class Helper {
     endDate = "2020-12-01";
     URI = "";
     storageID = "";
-        /**
-     * 
-     * @param startDate Date Format - "Year-Month-Day", Eg. "2019-01-01"
-     * @param endDate Date Format - "Year-Month-Day", Eg. "2019-01-01"
-     * @param storageID ID for Local Storage, Eg. "mexicoBorderID"
-     * @param portName Optional - Port Name, Eg. "San Ysidro"
-     * @param state   Optional - State, Eg. "California"
-     * @param measure  Optional - The type of transportation, Eg. "Bus" or "Pedestrians"
-     * @returns a generated request string for the implementation of the Helper object. 
-     */
-    constructor(startDate: string, endDate: string, storageID: string, portName? : string, state? : string, measure? : string) {
+    /**
+ * 
+ * @param startDate Date Format - "Year-Month-Day", Eg. "2019-01-01"
+ * @param endDate Date Format - "Year-Month-Day", Eg. "2019-01-01"
+ * @param storageID ID for Local Storage, Eg. "mexicoBorderID"
+ * @param portName Optional - Port Name, Eg. "San Ysidro"
+ * @param state   Optional - State, Eg. "California"
+ * @param measure  Optional - The type of transportation, Eg. "Bus" or "Pedestrians"
+ * @returns a generated request string for the implementation of the Helper object. 
+ */
+    constructor(startDate: string, endDate: string,  portName?: string, state?: string, measure?: string) {
         // Instead of Callback hell, I've opted for a more streamline approach. 
         // Create objects using the helper class that have these important variables built in.
         let URI = Helper.constructBtsRequest(startDate, endDate, portName, state, measure);
         console.log(URI);
         this.startDate = startDate;
         this.endDate = endDate;
-        this.storageID = storageID;
+        this.storageID = `${startDate}_to_${endDate}`
         this.URI = URI;
     }
     /**
@@ -37,7 +37,7 @@ export class Helper {
      * @param measure The type of transportation, Eg. "Bus" or "Pedestrians"
      * @returns a generated request string for the implementation of the Helper object. 
      */
-    static constructBtsRequest(startDate: string, endDate: string, portName? : string, state?: string, measure?: string) {
+    static constructBtsRequest(startDate: string, endDate: string, portName?: string, state?: string, measure?: string) {
         /**
          * Unreadable ternary check! 😊 
          * If the callback is not null, set the string to something for the SODA api to recognize. Other wise, set it to nothing
@@ -50,14 +50,36 @@ export class Helper {
     async fetchBTS() {
         /** Formulate URI for request*/
         if (this.checkStored() == false) {
-            let rows: IBtsData[] = await (await fetch(this.URI)).json();
-            this.store(rows);
+            let data: IBtsData[] = await (await fetch(this.URI)).json();
+            this.store(data);
         }
         return this.retrieveStored();
     }
-    async filterCrossingsPorts() {
-        let data = await this.fetchBTS();
-        return data;
+    /**
+    * @property Possible Measures - ["Pedestrians", "Trains", "Buses", "Personal Vehicle Passengers", "Personal Vehicles", "Trucks", "Train Passengers"]
+    * @param measureArray - Input an array of measures for BTS -  Eg. ["Pedestrians", "Trains", etc]
+    * @returns An object with the measure as the key and the sum of crossings as the pair
+    */
+    async calculateCrossings(measureArray: string[]) {
+        let data: IBtsData[] = await this.fetchBTS();
+        let measureObject: { [key: string]: number; } = {};
+        /**
+         * I've opted for a more antiquated approach for the sake of readability.
+         * Instead of using .reduce ES6 notation, I'm using a simple forEach.
+         * It gets the job done. 
+         */
+        measureArray.forEach(measure => {
+            let measureFiltered = data.filter((el: IBtsData) => {
+                return el.measure == measure
+            });
+            let measureSum = 0;
+            measureFiltered.forEach(element => {
+                measureSum += Number(element.value);
+            });
+            measureObject[measure] = measureSum;
+
+        });
+        return measureObject;
     }
     store(data: {}[]) {
         let valueStringified = JSON.stringify(data);
