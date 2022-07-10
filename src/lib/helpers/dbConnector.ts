@@ -3,7 +3,7 @@ import 'dotenv/config'
 import fs from "fs";
 import pkg from 'pg';
 const { Pool } = pkg;
-export default class db {
+export default class dbConnector {
   static SECRET_PASS = process.env.SECRET_PASS;
   static SECRET_USER = process.env.SECRET_USER;
   static SECRET_HOST = process.env.SECRET_HOST;
