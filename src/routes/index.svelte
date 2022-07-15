@@ -1,4 +1,6 @@
+
 <script lang="ts">
+	import { lineChart } from '$lib/helpers/lineChart';
 	import { onMount } from 'svelte';
 	import { Helper } from '$lib/helpers/btsHelper';
 	onMount(async () => {
@@ -6,6 +8,7 @@
 		console.log(
 			await getCrossingsObject(PASSENGERS, pastDateFormatted, currentDateFormatted, 'San Ysidro')
 		);
+		new lineChart("chartItem");
 	});
 	const PASSENGERS = ['Personal Vehicle Passengers', 'Train Passengers', 'Bus Passengers'];
 	const VEHICLES = ['Personal Vehicle', 'Buses', 'Trains'];
@@ -16,6 +19,7 @@
 	 * @param startDate  Date Format - "Year-Month-Day", Eg. "2019-01-01"
 	 * @param endDate  Date Format - "Year-Month-Day", Eg. "2019-01-01"
 	 * @param port_name Port of Entry, Eg. "San Ysidro"
+	 * @returns Returns the sum of each measure for the given time period in an object based on the measures inputted, Eg. {"Pedestrians" : 20000, "Train Passengers" : 5, etc...}
 	 */
 	async function getCrossingsObject(
 		measures: string[],
@@ -81,7 +85,8 @@
 		</div>
 	</div>
 </div>
-
+<div class="jumbotron"></div>
+	<canvas id="chartItem"></canvas>
 <style>
 	@import url('/static/app.css');
 	@import url('https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css');
