@@ -1,0 +1,1 @@
+select * from rss_times where daterecorded IS NOT NULL AND daterecorded >= '01-01-2020' AND daterecorded <= '01-01-2021';

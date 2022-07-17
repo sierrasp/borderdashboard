@@ -1,6 +1,6 @@
 import Chart from 'chart.js/auto';
 export class lineChart {
-    constructor(id : string) {
+    constructor(id : string, labels? : string[]) {
         new Chart(id, {
             type: 'line',
             data: {
