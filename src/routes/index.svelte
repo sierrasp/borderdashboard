@@ -3,6 +3,10 @@
 	import { onMount } from 'svelte';
 	import { Helper } from '$lib/helpers/btsHelper';
 	import { Datepicker } from 'svelte-calendar';
+	import { detach } from 'svelte/internal';
+	/**
+	 * Although I would love to stick with my capitalized constant naming convention, the npm package requires this naming
+	 */
 	const theme = {
 		calendar: {
 			width: '30vw',
@@ -35,11 +39,13 @@
 	};
 	const PASSENGERS = ['Personal Vehicle Passengers', 'Train Passengers', 'Bus Passengers'];
 	const VEHICLES = ['Personal Vehicle', 'Buses', 'Trains'];
+	const TITLES = ["Crossing of Goods", "Crossing of People", "Wait Times"];
+	const COLORS = ["bg-purple", "bg-green", "bg-blue"];
 	onMount(async () => {
-		console.log(
-			await getCrossingsObject(PASSENGERS, pastDateFormatted, currentDateFormatted, 'San Ysidro')
-		);
-		new lineChart('chartItem');
+		
+		defaultPassengersNumbers = await getCrossingsObject(PASSENGERS, pastDateFormatted, currentDateFormatted, 'San Ysidro');
+			console.log(defaultPassengersNumbers);
+		// new lineChart('chartItem');
 	});
 	/**
 	 
@@ -62,6 +68,12 @@
 	}
 	const currentDate = Helper.getCurrentDate();
 	/**
+	 * These dates are for the Svelte Calendar start and end generation
+	*/
+	const currentDateObject = new Date(currentDate.year, currentDate.month - 1, currentDate.day);
+	const previousDateObject = new Date(currentDate.year - 1, currentDate.month - 1, currentDate.day);
+	console.log(previousDateObject);
+	/**
 	 * This is the current date
 	 */
 	let currentDateFormatted = Helper.dateFormatGenerator(
@@ -78,13 +90,9 @@
 		currentDate.day
 	);
 
-	let calendarDates = {
-		crossingPeopleStart : pastDateFormatted,
-		crossingPeopleEnd : currentDateFormatted,
-		crossingGoodStart : pastDateFormatted,
-		crossingGoodEnd : currentDateFormatted
+	async function getPedestrianValue() {
+		return await getCrossingsObject(['Pedestrian'], pastDateFormatted, currentDateFormatted, 'San Ysidro');
 	}
-	
 	async function fetchData() {
 		const res = await fetch('./controller.json');
 		const { rows } = await res.json();
@@ -114,31 +122,52 @@
 	</div>
 </nav>
 <div class="container mt-3" style="height: 75vh; ">
-	<div class="row" style="height: 75vh;">
-		<div class="col container-md">
-			<div class="card text-center" style="height: 75vh;">
-				<div class="card-header bg-primary">
-					<h1 class="text-white">Crossings of People</h1>
+	<div class="row d-flex justify-content-start" style="height: 75vh;">
+		{#each TITLES as title, i}
+		<div class="col-lg-4" style="">
+			<div class="card" style="height: 75vh;">
+				<div class="card-header text-center {COLORS[i]}">
+					<h1 class="text-white">{title}</h1>
 				</div>
 				<div class="card-body">
-					<div class="d-inline-flex justify-items-center align-items-center">
-						<Datepicker {theme} />
-
-						<h4 class="p-2">to</h4>
-
-						<Datepicker start={calendarDates.crossingPeopleStart} {theme} />
+					<div class="container-fluid">
+						<div class="row text-center">
+							<div class="col">
+								<Datepicker {theme} selected={previousDateObject} end={currentDateObject}/>
+								<!-- <h4 class="p-2 fs-4">to</h4> -->
+								{#await getPedestrianValue()}
+							</div>
+							<div class="col">
+	
+								<h4 class="p-2 fs-4">to</h4>
+	
+							</div>
+							<div class="col">
+								<!-- <h4 class="p-2 fs-4">to</h4> -->
+								<Datepicker {theme} selected={currentDateObject}/>
+							</div>
+						</div>
+					</div>
+					<div class="container-fluid">
+						<div class="row align-items-center">
+							<div class="col">
+								<h3 class="card-title text-bold pt-3 mb-0">Number</h3>
+								<span class="card-title pt-0">Pedestrians</span>
+							</div>
+							<div class="col d-flex justify-content-end">
+								<i class="fa fa-arrow-up float-right fa-2xl " style="color: green;" aria-hidden="true"></i>
+							</div>
+						</div>
 					</div>
 
-					<h5 class="card-title">Special title treatment</h5>
-					<p class="card-text">
-						With supporting text below as a natural lead-in to additional content.
-					</p>
-					<a href="#" class="btn btn-primary">Go somewhere</a>
+					<!-- svelte-ignore a11y-invalid-attribute -->
+					<a href="" class="btn btn-primary">Go somewhere</a>
 				</div>
 				<div class="card-footer text-muted">2 days ago</div>
 			</div>
 		</div>
-		<div class="col container-md">
+		{/each}
+		<!-- <div class="col container-md">
 			<div class="card text-center" style="height: 75vh;">
 				<div class="card-header bg-success  ">
 					<h1 class="text-center text-white">Crossings of Goods</h1>
@@ -166,7 +195,7 @@
 				</div>
 				<div class="card-footer text-muted">2 days ago</div>
 			</div>
-		</div>
+		</div> -->
 	</div>
 </div>
 
@@ -178,4 +207,14 @@
 
 <style>
 	@import url('https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css');
+	@import url('https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.1.1/css/all.min.css');
+	.bg-purple {
+		background-color: purple;
+	}
+	.bg-green {
+		background-color: green;
+	}
+	.bg-blue {
+		background-color: blue;
+	}
 </style>
