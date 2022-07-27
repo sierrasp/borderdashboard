@@ -1,9 +1,11 @@
+
 <script lang="ts">
 	import { lineChart } from '$lib/helpers/lineChart';
 	import { onMount } from 'svelte';
 	import { Helper } from '$lib/helpers/btsHelper';
 	import { Datepicker } from 'svelte-calendar';
-	import { detach } from 'svelte/internal';
+	// import bootstrap from 'bootstrap';
+	// import { detach } from 'svelte/internal';
 	/**
 	 * Although I would love to stick with my capitalized constant naming convention, the npm package requires this naming
 	 */
@@ -39,13 +41,14 @@
 	};
 	const PASSENGERS = ['Personal Vehicle Passengers', 'Train Passengers', 'Bus Passengers'];
 	const VEHICLES = ['Personal Vehicle', 'Buses', 'Trains'];
-	const TITLES = ["Crossing of Goods", "Crossing of People", "Wait Times"];
-	const COLORS = ["bg-purple", "bg-green", "bg-blue"];
+	// const TITLES = ["Crossing of Goods", "Crossing of People"];
+	// const COLORS = ["bg-purple", "bg-green", "bg-blue"];
+	interface crossingObjectInterface {
+    [key: string]: number;
+}
+	// let defaultCrossingPeopleObject : crossingObjectInterface;
 	onMount(async () => {
-		
-		defaultPassengersNumbers = await getCrossingsObject(PASSENGERS, pastDateFormatted, currentDateFormatted, 'San Ysidro');
-			console.log(defaultPassengersNumbers);
-		// new lineChart('chartItem');
+		// getCrossingPeople();
 	});
 	/**
 	 
@@ -90,8 +93,9 @@
 		currentDate.day
 	);
 
-	async function getPedestrianValue() {
-		return await getCrossingsObject(['Pedestrian'], pastDateFormatted, currentDateFormatted, 'San Ysidro');
+	async function getCrossingPeople() {
+		let crossingsPeopleMeasures = PASSENGERS.concat(VEHICLES).concat(['Pedestrians']);
+		return await getCrossingsObject(crossingsPeopleMeasures, pastDateFormatted, currentDateFormatted, 'San Ysidro');
 	}
 	async function fetchData() {
 		const res = await fetch('./controller.json');
@@ -121,37 +125,75 @@
 		<button class="btn me-0 btn-primary"> Border Wait Time Graph </button>
 	</div>
 </nav>
+<div class="container-fluid mx-0 d-flex" style="border: 1px solid red;">
+	<div class="container">
+		<div class="dropdown">
+			<button class="btn btn-secondary dropdown-toggle" type="button" id="dropdownMenuButton2" data-bs-toggle="dropdown" aria-expanded="false">
+			  Dropdown button
+			</button>
+			<ul class="dropdown-menu dropdown-menu-dark" aria-labelledby="dropdownMenuButton2">
+			  <li><a class="dropdown-item active" href="#">Action</a></li>
+			  <li><a class="dropdown-item" href="#">Another action</a></li>
+			  <li><a class="dropdown-item" href="#">Something else here</a></li>
+			  <li><hr class="dropdown-divider"></li>
+			  <li><a class="dropdown-item" href="#">Separated link</a></li>
+			</ul>
+		  </div>
+	</div>
+</div>
+<!-- <nav class="navbar navbar-light bg-dark mt-3 w-75">
+	<div class="container w-75">
+		<a class="navbar-brand" href="#">
+			<img
+				src="/images/smartborder.png"
+				width="30"
+				height="30"
+				class="d-inline-block align-top me-3"
+				alt=""
+			/>
+			Smart Border Coalition
+		</a>
+		<button class="btn me-0 btn-primary"> Border Wait Time Graph </button>
+	</div>
+</nav> -->
 <div class="container mt-3" style="height: 75vh; ">
 	<div class="row d-flex justify-content-start" style="height: 75vh;">
-		{#each TITLES as title, i}
 		<div class="col-lg-4" style="">
 			<div class="card" style="height: 75vh;">
-				<div class="card-header text-center {COLORS[i]}">
-					<h1 class="text-white">{title}</h1>
+				<div class="card-header text-center bg-green">
+					<h1 class="text-white">Crossing of Goods</h1>
 				</div>
 				<div class="card-body">
-					<div class="container-fluid">
-						<div class="row text-center">
-							<div class="col">
-								<Datepicker {theme} selected={previousDateObject} end={currentDateObject}/>
+					<div class="d-inline-flex p-2 bd-highlight">
+						<!-- <div class="row text-center"> -->
+							<div class="">
+								<span>In</span>
+								<!-- <Datepicker {theme} selected={previousDateObject} end={currentDateObject}/> -->
 								<!-- <h4 class="p-2 fs-4">to</h4> -->
-								{#await getPedestrianValue()}
+								<!-- {#await getPe	destrianValue()} -->
 							</div>
-							<div class="col">
+							<div class="">
 	
-								<h4 class="p-2 fs-4">to</h4>
+								<h4 class="p-2 fs-4">May, 2021</h4>
 	
 							</div>
-							<div class="col">
+							<div class="">
 								<!-- <h4 class="p-2 fs-4">to</h4> -->
 								<Datepicker {theme} selected={currentDateObject}/>
 							</div>
-						</div>
+						<!-- </div> -->
 					</div>
 					<div class="container-fluid">
 						<div class="row align-items-center">
 							<div class="col">
-								<h3 class="card-title text-bold pt-3 mb-0">Number</h3>
+								{#await getCrossingPeople()}
+									...Loading
+								{:then object} 
+								{object.Pedestrians}
+								{:catch error}
+								System error: {error.message}.
+								{/await}
+								<h3 class="card-title text-bold pt-3 mb-0"></h3>
 								<span class="card-title pt-0">Pedestrians</span>
 							</div>
 							<div class="col d-flex justify-content-end">
@@ -166,7 +208,57 @@
 				<div class="card-footer text-muted">2 days ago</div>
 			</div>
 		</div>
-		{/each}
+
+		<div class="col-lg-4" style="">
+			<div class="card" style="height: 75vh;">
+				<div class="card-header text-center bg-blue">
+					<h1 class="text-white">Crossing of People</h1>
+				</div>
+				<div class="card-body">
+					<div class="d-inline-flex p-2 bd-highlight">
+						<!-- <div class="row text-center"> -->
+							<div class="">
+								<span>In</span>
+								<!-- <Datepicker {theme} selected={previousDateObject} end={currentDateObject}/> -->
+								<!-- <h4 class="p-2 fs-4">to</h4> -->
+								<!-- {#await getPe	destrianValue()} -->
+							</div>
+							<div class="">
+	
+								<h4 class="p-2 fs-4">May, 2021</h4>
+	
+							</div>
+							<div class="">
+								<!-- <h4 class="p-2 fs-4">to</h4> -->
+								<Datepicker {theme} selected={currentDateObject}/>
+							</div>
+						<!-- </div> -->
+					</div>
+					<div class="container-fluid">
+						<div class="row align-items-center">
+							<div class="col">
+								{#await getCrossingPeople()}
+									...Loading
+								{:then object} 
+								{object.Pedestrians}
+								{:catch error}
+								System error: {error.message}.
+								{/await}
+								<h3 class="card-title text-bold pt-3 mb-0"></h3>
+								<span class="card-title pt-0">Pedestrians</span>
+							</div>
+							<div class="col d-flex justify-content-end">
+								<i class="fa fa-arrow-up float-right fa-2xl " style="color: green;" aria-hidden="true"></i>
+							</div>
+						</div>
+					</div>
+
+					<!-- svelte-ignore a11y-invalid-attribute -->
+					<a href="" class="btn btn-primary">Go somewhere</a>
+				</div>
+				<div class="card-footer text-muted">2 days ago</div>
+			</div>
+		</div>
 		<!-- <div class="col container-md">
 			<div class="card text-center" style="height: 75vh;">
 				<div class="card-header bg-success  ">
