@@ -1,11 +1,16 @@
-
 <script lang="ts">
 	import { lineChart } from '$lib/helpers/lineChart';
 	import { onMount } from 'svelte';
 	import { Helper } from '$lib/helpers/btsHelper';
 	import { Datepicker } from 'svelte-calendar';
-	// import bootstrap from 'bootstrap';
-	// import { detach } from 'svelte/internal';
+	import {
+		easepick,
+		RangePlugin,
+		LockPlugin,
+		AmpPlugin,
+		PresetPlugin,
+		DateTime
+	} from '@easepick/bundle';
 	/**
 	 * Although I would love to stick with my capitalized constant naming convention, the npm package requires this naming
 	 */
@@ -41,15 +46,42 @@
 	};
 	const PASSENGERS = ['Personal Vehicle Passengers', 'Train Passengers', 'Bus Passengers'];
 	const VEHICLES = ['Personal Vehicle', 'Buses', 'Trains'];
-	// const TITLES = ["Crossing of Goods", "Crossing of People"];
-	// const COLORS = ["bg-purple", "bg-green", "bg-blue"];
-	interface crossingObjectInterface {
-    [key: string]: number;
-}
-	// let defaultCrossingPeopleObject : crossingObjectInterface;
 	onMount(async () => {
-		// getCrossingPeople();
+		createDateRangePicker();
+		await Helper.rss_feed();
 	});
+
+	/*************************** DOM FUNCTIONS HANDLING BTS DATA ****************************/
+
+	/**
+	 * Create Date Range Picker using dom acccess. We're using current dates, so the calendar will be updated consistently
+	 */
+	function createDateRangePicker() {
+		const picker = new easepick.create({
+			element: document.getElementById('dateRange')!,
+			css: ['https://cdn.jsdelivr.net/npm/@easepick/bundle@1.2.0/dist/index.css'],
+			zIndex: 10,
+			PresetPlugin: {
+				position: 'right'
+			},
+			plugins: [AmpPlugin, RangePlugin, LockPlugin, PresetPlugin],
+			RangePlugin: {
+				tooltip: true,
+				startDate: new DateTime(previousDateObject),
+				endDate: new DateTime(currentDateObject),
+				delimiter: '-'
+			},
+			format: 'DD MMM YYYY',
+			setup(picker) {
+				picker.on('select', (e) => {
+					var startdate = e.detail.start;
+					var enddate = e.detail.end;
+					console.log(startdate);
+					console.log(enddate);
+				});
+			}
+		});
+	}
 	/**
 	 
 	 * @property Possible Measures - ["Pedestrians", "Trains", "Buses", "Personal Vehicle Passengers", "Personal Vehicles", "Trucks", "Train Passengers", "Bus Passengers"]
@@ -72,9 +104,9 @@
 	const currentDate = Helper.getCurrentDate();
 	/**
 	 * These dates are for the Svelte Calendar start and end generation
-	*/
-	const currentDateObject = new Date(currentDate.year, currentDate.month - 1, currentDate.day);
-	const previousDateObject = new Date(currentDate.year - 1, currentDate.month - 1, currentDate.day);
+	 */
+	const currentDateObject = new Date(currentDate.year, currentDate.month - 1, 1);
+	const previousDateObject = new Date(currentDate.year - 1, currentDate.month - 1, 1);
 	console.log(previousDateObject);
 	/**
 	 * This is the current date
@@ -95,8 +127,15 @@
 
 	async function getCrossingPeople() {
 		let crossingsPeopleMeasures = PASSENGERS.concat(VEHICLES).concat(['Pedestrians']);
-		return await getCrossingsObject(crossingsPeopleMeasures, pastDateFormatted, currentDateFormatted, 'San Ysidro');
+		return await getCrossingsObject(
+			crossingsPeopleMeasures,
+			pastDateFormatted,
+			currentDateFormatted,
+			'San Ysidro'
+		);
 	}
+
+	/*************************** FETCHING POSTGRES DATA ****************************/
 	async function fetchData() {
 		const res = await fetch('./controller.json');
 		const { rows } = await res.json();
@@ -112,6 +151,7 @@
 
 <nav class="navbar navbar-light bg-light">
 	<div class="container">
+		<!-- svelte-ignore a11y-invalid-attribute -->
 		<a class="navbar-brand" href="#">
 			<img
 				src="/images/smartborder.png"
@@ -125,20 +165,56 @@
 		<button class="btn me-0 btn-primary"> Border Wait Time Graph </button>
 	</div>
 </nav>
-<div class="container-fluid mx-0 d-flex" style="border: 1px solid red;">
-	<div class="container">
+<!-- <div class="container-fluid mx-0 d-flex flex-row" style="border: 1px solid red;">
+	<div class="container  w-50">
 		<div class="dropdown">
-			<button class="btn btn-secondary dropdown-toggle" type="button" id="dropdownMenuButton2" data-bs-toggle="dropdown" aria-expanded="false">
-			  Dropdown button
+			<button
+				class="btn btn-secondary dropdown-toggle"
+				type="button"
+				id="dropdownMenuButton2"
+				data-bs-toggle="dropdown"
+				aria-expanded="false"
+			>
+				Dropdown button
 			</button>
 			<ul class="dropdown-menu dropdown-menu-dark" aria-labelledby="dropdownMenuButton2">
-			  <li><a class="dropdown-item active" href="#">Action</a></li>
-			  <li><a class="dropdown-item" href="#">Another action</a></li>
-			  <li><a class="dropdown-item" href="#">Something else here</a></li>
-			  <li><hr class="dropdown-divider"></li>
-			  <li><a class="dropdown-item" href="#">Separated link</a></li>
+				<li><a class="dropdown-item active" href="#">Action</a></li>
+				<li><a class="dropdown-item" href="#">Another action</a></li>
+				<li><a class="dropdown-item" href="#">Something else here</a></li>
+				<li><hr class="dropdown-divider" /></li>
+				<li><a class="dropdown-item" href="#">Separated link</a></li>
 			</ul>
-		  </div>
+		</div>
+	</div>
+
+	<input class="" id="dateRange" />
+</div> -->
+
+<div class="container-fluid " style="border: 1px solid red;">
+	<div class="row align-items-center">
+		<div class="col text-center">
+			<div class="dropdown">
+				<button
+					class="btn btn-secondary dropdown-toggle"
+					type="button"
+					id="dropdownMenuButton2"
+					data-bs-toggle="dropdown"
+					aria-expanded="false"
+				>
+					Dropdown button
+				</button>
+				<ul class="dropdown-menu dropdown-menu-dark" aria-labelledby="dropdownMenuButton2">
+					<li><a class="dropdown-item active" href="#">Action</a></li>
+					<li><a class="dropdown-item" href="#">Another action</a></li>
+					<li><a class="dropdown-item" href="#">Something else here</a></li>
+					<li><hr class="dropdown-divider" /></li>
+					<li><a class="dropdown-item" href="#">Separated link</a></li>
+				</ul>
+			</div>
+		</div>
+		<div class="col text-center">
+			Dates Selected: <input class="" id="dateRange" />
+		</div>
 	</div>
 </div>
 <!-- <nav class="navbar navbar-light bg-dark mt-3 w-75">
@@ -166,21 +242,19 @@
 				<div class="card-body">
 					<div class="d-inline-flex p-2 bd-highlight">
 						<!-- <div class="row text-center"> -->
-							<div class="">
-								<span>In</span>
-								<!-- <Datepicker {theme} selected={previousDateObject} end={currentDateObject}/> -->
-								<!-- <h4 class="p-2 fs-4">to</h4> -->
-								<!-- {#await getPe	destrianValue()} -->
-							</div>
-							<div class="">
-	
-								<h4 class="p-2 fs-4">May, 2021</h4>
-	
-							</div>
-							<div class="">
-								<!-- <h4 class="p-2 fs-4">to</h4> -->
-								<Datepicker {theme} selected={currentDateObject}/>
-							</div>
+						<div class="">
+							<span>In</span>
+							<!-- <Datepicker {theme} selected={previousDateObject} end={currentDateObject}/> -->
+							<!-- <h4 class="p-2 fs-4">to</h4> -->
+							<!-- {#await getPe	destrianValue()} -->
+						</div>
+						<div class="">
+							<h4 class="p-2 fs-4">May, 2021</h4>
+						</div>
+						<div class="">
+							<!-- <h4 class="p-2 fs-4">to</h4> -->
+							<Datepicker {theme} selected={currentDateObject} />
+						</div>
 						<!-- </div> -->
 					</div>
 					<div class="container-fluid">
@@ -188,16 +262,20 @@
 							<div class="col">
 								{#await getCrossingPeople()}
 									...Loading
-								{:then object} 
-								{object.Pedestrians}
+								{:then object}
+									{object.Pedestrians}
 								{:catch error}
-								System error: {error.message}.
+									System error: {error.message}.
 								{/await}
-								<h3 class="card-title text-bold pt-3 mb-0"></h3>
+								<h3 class="card-title text-bold pt-3 mb-0" />
 								<span class="card-title pt-0">Pedestrians</span>
 							</div>
 							<div class="col d-flex justify-content-end">
-								<i class="fa fa-arrow-up float-right fa-2xl " style="color: green;" aria-hidden="true"></i>
+								<i
+									class="fa fa-arrow-up float-right fa-2xl "
+									style="color: green;"
+									aria-hidden="true"
+								/>
 							</div>
 						</div>
 					</div>
@@ -217,21 +295,19 @@
 				<div class="card-body">
 					<div class="d-inline-flex p-2 bd-highlight">
 						<!-- <div class="row text-center"> -->
-							<div class="">
-								<span>In</span>
-								<!-- <Datepicker {theme} selected={previousDateObject} end={currentDateObject}/> -->
-								<!-- <h4 class="p-2 fs-4">to</h4> -->
-								<!-- {#await getPe	destrianValue()} -->
-							</div>
-							<div class="">
-	
-								<h4 class="p-2 fs-4">May, 2021</h4>
-	
-							</div>
-							<div class="">
-								<!-- <h4 class="p-2 fs-4">to</h4> -->
-								<Datepicker {theme} selected={currentDateObject}/>
-							</div>
+						<div class="">
+							<span>In</span>
+							<!-- <Datepicker {theme} selected={previousDateObject} end={currentDateObject}/> -->
+							<!-- <h4 class="p-2 fs-4">to</h4> -->
+							<!-- {#await getPe	destrianValue()} -->
+						</div>
+						<div class="">
+							<h4 class="p-2 fs-4">May, 2021</h4>
+						</div>
+						<div class="">
+							<!-- <h4 class="p-2 fs-4">to</h4> -->
+							<Datepicker {theme} selected={currentDateObject} />
+						</div>
 						<!-- </div> -->
 					</div>
 					<div class="container-fluid">
@@ -239,16 +315,72 @@
 							<div class="col">
 								{#await getCrossingPeople()}
 									...Loading
-								{:then object} 
-								{object.Pedestrians}
+								{:then object}
+									{object.Pedestrians}
 								{:catch error}
-								System error: {error.message}.
+									System error: {error.message}.
 								{/await}
-								<h3 class="card-title text-bold pt-3 mb-0"></h3>
+								<h3 class="card-title text-bold pt-3 mb-0" />
 								<span class="card-title pt-0">Pedestrians</span>
 							</div>
 							<div class="col d-flex justify-content-end">
-								<i class="fa fa-arrow-up float-right fa-2xl " style="color: green;" aria-hidden="true"></i>
+								<i
+									class="fa fa-arrow-up float-right fa-2xl "
+									style="color: green;"
+									aria-hidden="true"
+								/>
+							</div>
+						</div>
+					</div>
+
+					<!-- svelte-ignore a11y-invalid-attribute -->
+					<a href="" class="btn btn-primary">Go somewhere</a>
+				</div>
+				<div class="card-footer text-muted">2 days ago</div>
+			</div>
+		</div>
+		<div class="col-lg-4" style="">
+			<div class="card" style="height: 75vh;">
+				<div class="card-header text-center bg-blue">
+					<h1 class="text-white">Wait Times</h1>
+				</div>
+				<div class="card-body">
+					<div class="d-inline-flex p-2 bd-highlight">
+						<!-- <div class="row text-center"> -->
+						<div class="">
+							<span>In</span>
+							<!-- <Datepicker {theme} selected={previousDateObject} end={currentDateObject}/> -->
+							<!-- <h4 class="p-2 fs-4">to</h4> -->
+							<!-- {#await getPe	destrianValue()} -->
+						</div>
+						<div class="">
+							<h4 class="p-2 fs-4">May, 2021</h4>
+						</div>
+						<div class="">
+							<!-- <h4 class="p-2 fs-4">to</h4> -->
+							<Datepicker {theme} selected={currentDateObject} />
+						</div>
+						<!-- </div> -->
+					</div>
+					<div class="container-fluid">
+						<div class="row align-items-center">
+							<div class="col">
+								{#await getCrossingPeople()}
+									...Loading
+								{:then object}
+									{object.Pedestrians}
+								{:catch error}
+									System error: {error.message}.
+								{/await}
+								<h3 class="card-title text-bold pt-3 mb-0" />
+								<span class="card-title pt-0">Pedestrians</span>
+							</div>
+							<div class="col d-flex justify-content-end">
+								<i
+									class="fa fa-arrow-up float-right fa-2xl "
+									style="color: green;"
+									aria-hidden="true"
+								/>
 							</div>
 						</div>
 					</div>

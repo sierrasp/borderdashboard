@@ -15,32 +15,35 @@
 	},
 	"devDependencies": {
 		"@playwright/test": "^1.22.2",
+		"@popperjs/core": "^2.11.5",
 		"@sveltejs/adapter-auto": "next",
 		"@sveltejs/adapter-node": "^1.0.0-next.78",
 		"@sveltejs/kit": "next",
 		"@types/pg": "^8.6.5",
 		"@typescript-eslint/eslint-plugin": "^5.27.0",
 		"@typescript-eslint/parser": "^5.27.0",
+		"bootstrap": "^5.2.0",
 		"eslint": "^8.16.0",
 		"eslint-config-prettier": "^8.3.0",
 		"eslint-plugin-svelte3": "^4.0.0",
 		"prettier": "^2.6.2",
 		"prettier-plugin-svelte": "^2.7.0",
 		"rollup-plugin-copy": "^3.4.0",
+		"sass": "^1.53.0",
 		"svelte": "^3.44.0",
 		"svelte-calendar": "^3.1.6",
 		"svelte-check": "^2.7.1",
 		"svelte-preprocess": "^4.10.7",
 		"tslib": "^2.3.1",
-		"typescript": "^4.7.2",
-		"sass": "^1.53.0",
-		"bootstrap": "^5.2.0",
-		"@popperjs/core": "^2.11.5"
+		"typescript": "^4.7.2"
 	},
 	"type": "module",
 	"dependencies": {
+		"@easepick/bundle": "^1.2.0",
 		"chart.js": "^3.8.0",
 		"dotenv": "^16.0.1",
-		"pg": "^8.7.3"
+		"pg": "^8.7.3",
+		"rss-to-json": "^2.1.0",
+		"svelte-select": "^4.4.7"
 	}
 }

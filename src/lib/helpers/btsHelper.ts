@@ -1,4 +1,5 @@
 import type { IBtsData } from "./BtsHelperTypes";
+import {parse} from 'rss-to-json';
 export class Helper {
     // **** **** **** **** **** **** **** **** **** **** **** **** **** **** **** ****
     // Date Format - "Year-Month-Day"
@@ -20,7 +21,7 @@ export class Helper {
     constructor(startDate: string, endDate: string, portName?: string, state?: string, measure?: string) {
         // Instead of Callback hell, I've opted for a more streamline approach. 
         // Create objects using the helper class that have these important variables built in.
-        let URI = Helper.constructBtsRequest(startDate, endDate, portName, state, measure);
+        const URI = Helper.constructBtsRequest(startDate, endDate, portName, state, measure);
         console.log(URI);
         this.startDate = startDate;
         this.endDate = endDate;
@@ -41,9 +42,9 @@ export class Helper {
          * Unreadable ternary check! 😊 
          * If the callback is not null, set the string to something for the SODA api to recognize. Other wise, set it to nothing
          */
-        let portString = (portName != null) ? `&port_name=${portName}` : ``;
-        let stateString = (state != null) ? `&state=${state}` : ``;
-        let measureString = (measure != null) ? `&measure=${measure}` : ``;
+        const portString = (portName != null) ? `&port_name=${portName}` : ``;
+        const stateString = (state != null) ? `&state=${state}` : ``;
+        const measureString = (measure != null) ? `&measure=${measure}` : ``;
         return `https://data.transportation.gov/resource/keg4-3bc2.json?$limit=100000&$where=date between '${startDate}T00:00:00.000' and '${endDate}T00:00:00.000'&border=US-Mexico Border${stateString}${measureString}${portString}`
     }
     /**
@@ -54,8 +55,8 @@ export class Helper {
      * @returns A date string for class generation, Eg. "2019-01-01"
      */
     static dateFormatGenerator(year: number, month: number, day: number) {
-        let slicedMonth = ('0' + month).slice(-2);
-        let slicedDay = ('0' + day).slice(-2); // '11'
+        const slicedMonth = ('0' + month).slice(-2);
+        const slicedDay = ('0' + day).slice(-2); // '11'
         return `${year}-${slicedMonth}-${slicedDay}`;
     }
     /**
@@ -64,17 +65,66 @@ export class Helper {
  */
 
     static getCurrentDate() {
-        let currentDate = new Date();
+        const currentDate = new Date();
         return {
             year: currentDate.getFullYear(),
             month: currentDate.getMonth() + 1,
             day: currentDate.getDate()
         };
     };
+    static async rss_feed() {
+
+        const data = await parse('https://bwt.cbp.gov/api/bwtRss/rssbyportnum/HTML/POV/250401');
+        console.log(data);
+        const description = data['items'][0]['description']['$text'];
+        const durationReg = /\d{1,3} (min)/gm;
+        const noonReg = /Noon PDT/gm
+        const midnightReg = /Midnight PDT/gm
+        const timestampReg = /\d{1,3}:\d{2} (am|pm)/gm
+        const durationFound = description.match(durationReg);
+        let timestampFound = description.match(timestampReg);
+        if (timestampFound == null) {
+          timestampFound = []
+        }
+        const noonFound = description.match(noonReg);
+        const midnightFound = description.match(midnightReg);
+        if (midnightFound != null) {
+          for (let i = 0; i < midnightFound.length; i++) {
+            timestampFound.push('12:00 am');
+          }
+        }
+        if (noonFound != null) {
+          for (let i = 0; i < noonFound.length; i++) {
+            timestampFound.push('12:00 pm');
+          }
+        }
+        for (let i = 0; i < durationFound.length; i++) {
+          const year = new Date().getFullYear();
+          const month = ('0' + (new Date().getMonth() + 1)).slice(-2)
+          const day = ('0' + (new Date().getDate())).slice(-2)
+          const update_time = new Date(`${year}-${month}-${day} ${timestampFound[i]}`);
+          const duration = Number(durationFound[i].match(/\d{1,3}/gm)[0]);
+          console.log(update_time);
+          console.log(duration);
+          /** To implement - Get wait times into dom */
+        //   const dateInsert = `TO_TIMESTAMP('${year}-${month}-${day} ${update_time.getHours()}:00:00.000000000', 'YYYY-MM-DD HH24:MI:SS.FF')`;
+        //   const dateTime = DateTime.now().setZone('America/Los_Angeles');
+        //   const date_recorded = `TO_TIMESTAMP('${dateTime.year}-${dateTime.month}-${dateTime.day} ${dateTime.hour}:${dateTime.minute}:${dateTime.second}.000000000', 'YYYY-MM-DD HH24:MI:SS.FF')`;
+        //   q += `${bpsql}`
+        //   q += `${dateInsert},`
+        //   q += `'${i}',`
+        //   q += `${duration * 60},`;
+        //   q += `${portnum},`;
+        //   q += `${date_recorded},`;
+        //   q += `'${raw_data}'`;
+        //   q += endbp;
+        }
+      }
+    
     async fetchBTS() {
         /** Formulate URI for request*/
         if (this.checkStored() == false) {
-            let data: IBtsData[] = await (await fetch(this.URI)).json();
+            const data: IBtsData[] = await (await fetch(this.URI)).json();
             this.store(data);
         }
         return this.retrieveStored();
@@ -85,15 +135,15 @@ export class Helper {
     * @returns An object with the measure as the key and the sum of crossings as the pair
     */
     async calculateCrossings(measureArray: string[]) {
-        let data: IBtsData[] = await this.fetchBTS();
-        let measureObject: { [key: string]: number; } = {};
+        const data: IBtsData[] = await this.fetchBTS();
+        const measureObject: { [key: string]: number; } = {};
         /**
          * I've opted for a more antiquated approach for the sake of readability.
          * Instead of using .reduce ES6 notation, I'm using a simple forEach.
          * It gets the job done. 
          */
         measureArray.forEach(measure => {
-            let measureFiltered = data.filter((el: IBtsData) => {
+            const measureFiltered = data.filter((el: IBtsData) => {
                 return el.measure == measure
             });
             let measureSum = 0;
@@ -105,12 +155,12 @@ export class Helper {
         });
         return measureObject;
     }
-    store(data: {}[]) {
-        let valueStringified = JSON.stringify(data);
+    store(data: IBtsData[]) {
+        const valueStringified = JSON.stringify(data);
         localStorage.setItem(this.storageID, valueStringified);
     }
     checkStored() {
-        let value = localStorage.getItem(this.storageID);
+        const value = localStorage.getItem(this.storageID);
         if (value != null) {
             return true;
         }
@@ -118,8 +168,8 @@ export class Helper {
     }
     retrieveStored() {
         if (this.checkStored() == true) {
-            let storedData = localStorage.getItem(this.storageID);
-            let rows = JSON.parse(storedData || '{}');
+            const storedData = localStorage.getItem(this.storageID);
+            const rows: IBtsData[] = JSON.parse(storedData || '{}');
             return rows;
         }
     }
