@@ -77,7 +77,7 @@ export class Helper {
      * @param port Port needs to represent cbp number of port - Eg. San Ysidro port num = 250401
      * @returns An object containing the last updated time (formatted) - Eg. Today at 10:00 pm. Also returns duration in minutes.
      */
-    static async getCurrentWaitTimes(port = 250401) {
+    static async getCurrentWaitTimes(port : number) {
         const data = await parse(`https://bwt.cbp.gov/api/bwtRss/rssbyportnum/HTML/POV/${port}`);
         const description = data['items'][0]['description']['$text'];
         const durationReg = /\d{1,3} (min)/gm;

@@ -11,6 +11,10 @@
 		PresetPlugin,
 		DateTime
 	} from '@easepick/bundle';
+	/**
+	 * Svelte Strap doesn't work with svelte kit, so I had to use this workaround - npm i git+https://github.com/laxadev/sveltestrap.git
+	 */
+	import { ButtonDropdown, DropdownItem, DropdownMenu, DropdownToggle } from 'sveltestrap';
 	import Select from 'svelte-select';
 
 	/*************************** CONSTANTS AND GLOBAL VARIABLE DEFINING ****************************/
@@ -48,7 +52,7 @@
 		}
 	};
 	/**
-	 * So far, this is the last update for the general lane - Formatted.
+	 * This is the last update string for the general lane - Formatted. Eg. Today at 10:00 am.
 	 */
 	let lastUpdate: string;
 	$: lastUpdate;
@@ -57,23 +61,30 @@
 	 */
 	let lastUpdateDuration: number;
 	$: lastUpdateDuration;
-
-	const items: {}[] = [
-		{ value: 'sanYsidro', label: 'San Ysidro' },
-		{ value: 'otay', label: 'Otay' },
-		{ value: 'Calexico', label: 'Calexico' }
+	
+	let selectedPortNumber : number;
+	$: selectedPortNumber = 250401;
+	$: {
+		console.log(selectedPortNumber);
+		setLastUpdate(selectedPortNumber);
+	}
+	/**
+	 * Dropdown Ports with Label and Port code as value
+	 */
+	const dropdownItems: { value: number; label: string }[] = [
+		{ value: 250401, label: 'San Ysidro' },
+		{ value: 250601, label: 'Otay Mesa' },
+		{ value: 250301, label: 'Calexico East' },
+		{ value: 250302, label: 'Calexico West' }
 	];
-	const value = { value: 'sanYsidro', label: 'San Ysidro' };
+	const dropdownDefault = { value: 250401, label: 'San Ysidro' };
 	const PASSENGERS = ['Personal Vehicle Passengers', 'Train Passengers', 'Bus Passengers'];
 	const VEHICLES = ['Personal Vehicle', 'Buses', 'Trains'];
 
 	/*************************** ON MOUNT SECTION  ****************************/
 	onMount(async () => {
 		createDateRangePicker();
-		let { updateTimes } = await Helper.getCurrentWaitTimes();
-		lastUpdate = updateTimes[0];
-		let { waitTimesArray } = await Helper.getCurrentWaitTimes();
-		lastUpdateDuration = waitTimesArray[0];
+		setLastUpdate(selectedPortNumber);
 	});
 
 	/*************************** DOM FUNCTIONS HANDLING BTS DATA ****************************/
@@ -158,12 +169,21 @@
 			currentDateFormatted,
 			'San Ysidro'
 		);
-	}
-	function handleSelect(event) {
+	};
+	
+	function handleSelect(event: { detail: any }) {
 		console.log('selected item', event.detail);
-		// .. do something here 🙂
+		selectedPortNumber = event.detail.value;
+	};
+	/**
+	 * Set last update on wait times column. Eg. 75 minutes - Last update: Today at 10:00 am.
+	 * @param port port number relating to rss feed of cbp. Eg. San Ysidro port number is 250401
+	 */
+	async function setLastUpdate (port = 250401) {
+		let { updateTimes, waitTimesArray } = await Helper.getCurrentWaitTimes(port);
+		lastUpdate = updateTimes[0];
+		lastUpdateDuration = waitTimesArray[0];
 	}
-
 	/*************************** FETCHING POSTGRES DATA ****************************/
 	async function fetchData() {
 		const res = await fetch('./controller.json');
@@ -175,7 +195,7 @@
 		} else {
 			throw new Error(rows);
 		}
-	}
+	};
 </script>
 
 <nav class="navbar navbar-light bg-light">
@@ -194,37 +214,18 @@
 		<button class="btn me-0 btn-primary"> Border Wait Time Graph </button>
 	</div>
 </nav>
-<!-- <div class="container-fluid mx-0 d-flex flex-row" style="border: 1px solid red;">
-	<div class="container  w-50">
-		<div class="dropdown">
-			<button
-				class="btn btn-secondary dropdown-toggle"
-				type="button"
-				id="dropdownMenuButton2"
-				data-bs-toggle="dropdown"
-				aria-expanded="false"
-			>
-				Dropdown button
-			</button>
-			<ul class="dropdown-menu dropdown-menu-dark" aria-labelledby="dropdownMenuButton2">
-				<li><a class="dropdown-item active" href="#">Action</a></li>
-				<li><a class="dropdown-item" href="#">Another action</a></li>
-				<li><a class="dropdown-item" href="#">Something else here</a></li>
-				<li><hr class="dropdown-divider" /></li>
-				<li><a class="dropdown-item" href="#">Separated link</a></li>
-			</ul>
-		</div>
-	</div>
-
-	<input class="" id="dateRange" />
-</div> -->
 
 <div class="container-fluid " style="border: 1px solid red;">
 	<div class="row align-items-center justify-content-center">
 		<div class="col ">
 			<div class="d-flex justify-content-center">
-				<div class="w-25">
-					Select port: <Select {items} {value} on:select={handleSelect} />
+				<div class="w-50">
+					<div class="d-inline-flex justify-content-center align-items-center">
+						<h5 class="my-0 me-2">Port Selected:</h5>
+						<Select items={dropdownItems} value={dropdownDefault} on:select={handleSelect} />
+					</div>
+					<!-- Select port: <Select {items} {value} on:select={handleSelect} /> -->
+					<!-- Port Selected: <Select {items} {value} on:select={handleSelect}></Select> -->
 				</div>
 			</div>
 		</div>
@@ -233,6 +234,7 @@
 		</div>
 	</div>
 </div>
+<!-- Crossing of goods, people, wait times-->
 <div class="container mt-3" style="height: 75vh; ">
 	<div class="row d-flex justify-content-start" style="height: 75vh;">
 		<div class="col-lg-4" style="">
@@ -342,7 +344,7 @@
 		</div>
 		<div class="col-lg-4" style="">
 			<div class="card" style="height: 75vh;">
-				<div class="card-header text-center bg-blue">
+				<div class="card-header text-center bg-purple">
 					<h1 class="text-white">Wait Times</h1>
 					<h4 class="text-white">{lastUpdateDuration} minutes - Last update: {lastUpdate}</h4>
 				</div>
