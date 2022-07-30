@@ -71,13 +71,13 @@
 	/**
 	 * Dropdown Ports with Label and Port code as value
 	 */
-	const dropdownItems: { value: number; label: string }[] = [
+	const DropdownItems: { value: number; label: string }[] = [
 		{ value: 250401, label: 'San Ysidro' },
 		{ value: 250601, label: 'Otay Mesa' },
 		{ value: 250301, label: 'Calexico East' },
 		{ value: 250302, label: 'Calexico West' }
 	];
-	const dropdownDefault = { value: 250401, label: 'San Ysidro' };
+	const DropdownDefault = { value: 250401, label: 'San Ysidro' };
 	const PASSENGERS = ['Personal Vehicle Passengers', 'Train Passengers', 'Bus Passengers'];
 	const VEHICLES = ['Personal Vehicle', 'Buses', 'Trains'];
 
@@ -93,7 +93,7 @@
 	 * Create Date Range Picker using dom acccess. We're using current dates, so the calendar will be updated consistently
 	 */
 	function createDateRangePicker() {
-		const picker = new easepick.create({
+		new easepick.create({
 			element: document.getElementById('dateRange')!,
 			css: ['https://cdn.jsdelivr.net/npm/@easepick/bundle@1.2.0/dist/index.css'],
 			zIndex: 10,
@@ -103,8 +103,8 @@
 			plugins: [AmpPlugin, RangePlugin, LockPlugin, PresetPlugin],
 			RangePlugin: {
 				tooltip: true,
-				startDate: new DateTime(previousDateObject),
-				endDate: new DateTime(currentDateObject),
+				startDate: new DateTime(PreviousDateObject),
+				endDate: new DateTime(CurrentDateObject),
 				delimiter: '-'
 			},
 			format: 'DD MMM YYYY',
@@ -137,28 +137,28 @@
 		let calculatedCrossingsObject = await instance.calculateCrossings(measures);
 		return calculatedCrossingsObject;
 	}
-	const currentDate = Helper.getCurrentDate();
+	const CurrentDate = Helper.getCurrentDate();
 	/**
 	 * These dates are for the Svelte Calendar start and end generation
 	 */
-	const currentDateObject = new Date(currentDate.year, currentDate.month - 1, 1);
-	const previousDateObject = new Date(currentDate.year - 1, currentDate.month - 1, 1);
-	console.log(previousDateObject);
+	const CurrentDateObject = new Date(CurrentDate.year, CurrentDate.month - 1, 1);
+	const PreviousDateObject = new Date(CurrentDate.year - 1, CurrentDate.month - 1, 1);
+	console.log(PreviousDateObject);
 	/**
 	 * This is the current date
 	 */
 	let currentDateFormatted = Helper.dateFormatGenerator(
-		currentDate.year,
-		currentDate.month,
-		currentDate.day
+		CurrentDate.year,
+		CurrentDate.month,
+		CurrentDate.day
 	);
 	/**
 	 * This is the date a year ago relative to the current date
 	 */
 	let pastDateFormatted = Helper.dateFormatGenerator(
-		currentDate.year - 1,
-		currentDate.month,
-		currentDate.day
+		CurrentDate.year - 1,
+		CurrentDate.month,
+		CurrentDate.day
 	);
 
 	async function getCrossingPeople() {
@@ -222,7 +222,7 @@
 				<div class="w-50">
 					<div class="d-inline-flex justify-content-center align-items-center">
 						<h5 class="my-0 me-2">Port Selected:</h5>
-						<Select items={dropdownItems} value={dropdownDefault} on:select={handleSelect} />
+						<Select items={DropdownItems} value={DropdownDefault} on:select={handleSelect} />
 					</div>
 					<!-- Select port: <Select {items} {value} on:select={handleSelect} /> -->
 					<!-- Port Selected: <Select {items} {value} on:select={handleSelect}></Select> -->
@@ -256,7 +256,7 @@
 						</div>
 						<div class="">
 							<!-- <h4 class="p-2 fs-4">to</h4> -->
-							<Datepicker {theme} selected={currentDateObject} />
+							<Datepicker {theme} selected={CurrentDateObject} />
 						</div>
 						<!-- </div> -->
 					</div>
@@ -309,7 +309,7 @@
 						</div>
 						<div class="">
 							<!-- <h4 class="p-2 fs-4">to</h4> -->
-							<Datepicker {theme} selected={currentDateObject} />
+							<Datepicker {theme} selected={CurrentDateObject} />
 						</div>
 						<!-- </div> -->
 					</div>
@@ -362,7 +362,7 @@
 						</div>
 						<div class="">
 							<!-- <h4 class="p-2 fs-4">to</h4> -->
-							<Datepicker {theme} selected={currentDateObject} />
+							<Datepicker {theme} selected={CurrentDateObject} />
 						</div>
 						<!-- </div> -->
 					</div>
