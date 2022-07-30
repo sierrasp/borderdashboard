@@ -1,5 +1,5 @@
 import type { IBtsData } from "./BtsHelperTypes";
-import {parse} from 'rss-to-json';
+import { parse } from 'rss-to-json';
 export class Helper {
     // **** **** **** **** **** **** **** **** **** **** **** **** **** **** **** ****
     // Date Format - "Year-Month-Day"
@@ -72,10 +72,13 @@ export class Helper {
             day: currentDate.getDate()
         };
     };
-    static async rss_feed() {
-
-        const data = await parse('https://bwt.cbp.gov/api/bwtRss/rssbyportnum/HTML/POV/250401');
-        console.log(data);
+    /**
+     * 
+     * @param port Port needs to represent cbp number of port - Eg. San Ysidro port num = 250401
+     * @returns An object containing the last updated time (formatted) - Eg. Today at 10:00 pm. Also returns duration in minutes.
+     */
+    static async getCurrentWaitTimes(port = 250401) {
+        const data = await parse(`https://bwt.cbp.gov/api/bwtRss/rssbyportnum/HTML/POV/${port}`);
         const description = data['items'][0]['description']['$text'];
         const durationReg = /\d{1,3} (min)/gm;
         const noonReg = /Noon PDT/gm
@@ -84,43 +87,67 @@ export class Helper {
         const durationFound = description.match(durationReg);
         let timestampFound = description.match(timestampReg);
         if (timestampFound == null) {
-          timestampFound = []
+            timestampFound = []
         }
         const noonFound = description.match(noonReg);
         const midnightFound = description.match(midnightReg);
         if (midnightFound != null) {
-          for (let i = 0; i < midnightFound.length; i++) {
-            timestampFound.push('12:00 am');
-          }
+            for (let i = 0; i < midnightFound.length; i++) {
+                timestampFound.push('12:00 am');
+            }
         }
         if (noonFound != null) {
-          for (let i = 0; i < noonFound.length; i++) {
-            timestampFound.push('12:00 pm');
-          }
-        }
+            for (let i = 0; i < noonFound.length; i++) {
+                timestampFound.push('12:00 pm');
+            }
+        };
+        let waitTimesArray: number[] = [];
+        let updateTime: Date = new Date();
+        let lastUpdate: string[] = [];
         for (let i = 0; i < durationFound.length; i++) {
-          const year = new Date().getFullYear();
-          const month = ('0' + (new Date().getMonth() + 1)).slice(-2)
-          const day = ('0' + (new Date().getDate())).slice(-2)
-          const update_time = new Date(`${year}-${month}-${day} ${timestampFound[i]}`);
-          const duration = Number(durationFound[i].match(/\d{1,3}/gm)[0]);
-          console.log(update_time);
-          console.log(duration);
-          /** To implement - Get wait times into dom */
-        //   const dateInsert = `TO_TIMESTAMP('${year}-${month}-${day} ${update_time.getHours()}:00:00.000000000', 'YYYY-MM-DD HH24:MI:SS.FF')`;
-        //   const dateTime = DateTime.now().setZone('America/Los_Angeles');
-        //   const date_recorded = `TO_TIMESTAMP('${dateTime.year}-${dateTime.month}-${dateTime.day} ${dateTime.hour}:${dateTime.minute}:${dateTime.second}.000000000', 'YYYY-MM-DD HH24:MI:SS.FF')`;
-        //   q += `${bpsql}`
-        //   q += `${dateInsert},`
-        //   q += `'${i}',`
-        //   q += `${duration * 60},`;
-        //   q += `${portnum},`;
-        //   q += `${date_recorded},`;
-        //   q += `'${raw_data}'`;
-        //   q += endbp;
-        }
-      }
-    
+            const year = new Date().getFullYear();
+            const month = ('0' + (new Date().getMonth() + 1)).slice(-2);
+            const day = ('0' + (new Date().getDate())).slice(-2);
+            const duration = Number(durationFound[i].match(/\d{1,3}/gm)[0]);
+            waitTimesArray = [...waitTimesArray, duration];
+            updateTime = new Date(`${year}-${month}-${day} ${timestampFound[i]}`);
+            if (updateTime.getDate() == new Date().getDate()) {
+                lastUpdate = [...lastUpdate, `Today at ${getAMPMformat(updateTime)}`];
+            };
+            if (updateTime.getDate() == new Date().getDate() - 1) {
+                lastUpdate = [...lastUpdate, `Yesterday at ${getAMPMformat(updateTime)}`]
+            };
+            if (updateTime.getDate() != new Date().getDate()) {
+                lastUpdate = [...lastUpdate, `${year}-${month}-${day} at ${getAMPMformat(updateTime)}`]
+            };
+        };
+        /**
+         * 
+         * @param date input date for conversion
+         * @returns ap/pm format of hour and minute -  Eg. 10:00pm
+         */
+        function getAMPMformat(date: Date) {
+            let hours = date.getHours();
+            const minutes = date.getMinutes();
+            const ampm = hours >= 12 ? 'pm' : 'am';
+            hours = hours % 12;
+            hours = hours ? hours : 12; // the hour '0' should be '12'
+            const minutesString = minutes < 10 ? '0' + minutes : minutes;
+            const strTime = hours + ':' + minutesString + ' ' + ampm;
+            return strTime;
+        };
+        return {
+            /**
+             * updateTime is an array of update times formatted based on general, sentri, and ready lanes.
+             */
+            updateTimes: lastUpdate,
+            /**
+             * Wait Times Array is an array of all durations based on general, sentri, and ready lanes.
+             */
+            waitTimesArray: waitTimesArray
+        };
+    }
+
     async fetchBTS() {
         /** Formulate URI for request*/
         if (this.checkStored() == false) {

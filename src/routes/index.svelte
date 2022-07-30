@@ -11,6 +11,9 @@
 		PresetPlugin,
 		DateTime
 	} from '@easepick/bundle';
+	import Select from 'svelte-select';
+
+	/*************************** CONSTANTS AND GLOBAL VARIABLE DEFINING ****************************/
 	/**
 	 * Although I would love to stick with my capitalized constant naming convention, the npm package requires this naming
 	 */
@@ -44,11 +47,33 @@
 			}
 		}
 	};
+	/**
+	 * So far, this is the last update for the general lane - Formatted.
+	 */
+	let lastUpdate: string;
+	$: lastUpdate;
+	/**
+	 * General Lane Duration
+	 */
+	let lastUpdateDuration: number;
+	$: lastUpdateDuration;
+
+	const items: {}[] = [
+		{ value: 'sanYsidro', label: 'San Ysidro' },
+		{ value: 'otay', label: 'Otay' },
+		{ value: 'Calexico', label: 'Calexico' }
+	];
+	const value = { value: 'sanYsidro', label: 'San Ysidro' };
 	const PASSENGERS = ['Personal Vehicle Passengers', 'Train Passengers', 'Bus Passengers'];
 	const VEHICLES = ['Personal Vehicle', 'Buses', 'Trains'];
+
+	/*************************** ON MOUNT SECTION  ****************************/
 	onMount(async () => {
 		createDateRangePicker();
-		await Helper.rss_feed();
+		let { updateTimes } = await Helper.getCurrentWaitTimes();
+		lastUpdate = updateTimes[0];
+		let { waitTimesArray } = await Helper.getCurrentWaitTimes();
+		lastUpdateDuration = waitTimesArray[0];
 	});
 
 	/*************************** DOM FUNCTIONS HANDLING BTS DATA ****************************/
@@ -134,6 +159,10 @@
 			'San Ysidro'
 		);
 	}
+	function handleSelect(event) {
+		console.log('selected item', event.detail);
+		// .. do something here 🙂
+	}
 
 	/*************************** FETCHING POSTGRES DATA ****************************/
 	async function fetchData() {
@@ -191,25 +220,12 @@
 </div> -->
 
 <div class="container-fluid " style="border: 1px solid red;">
-	<div class="row align-items-center">
-		<div class="col text-center">
-			<div class="dropdown">
-				<button
-					class="btn btn-secondary dropdown-toggle"
-					type="button"
-					id="dropdownMenuButton2"
-					data-bs-toggle="dropdown"
-					aria-expanded="false"
-				>
-					Dropdown button
-				</button>
-				<ul class="dropdown-menu dropdown-menu-dark" aria-labelledby="dropdownMenuButton2">
-					<li><a class="dropdown-item active" href="#">Action</a></li>
-					<li><a class="dropdown-item" href="#">Another action</a></li>
-					<li><a class="dropdown-item" href="#">Something else here</a></li>
-					<li><hr class="dropdown-divider" /></li>
-					<li><a class="dropdown-item" href="#">Separated link</a></li>
-				</ul>
+	<div class="row align-items-center justify-content-center">
+		<div class="col ">
+			<div class="d-flex justify-content-center">
+				<div class="w-25">
+					Select port: <Select {items} {value} on:select={handleSelect} />
+				</div>
 			</div>
 		</div>
 		<div class="col text-center">
@@ -217,21 +233,6 @@
 		</div>
 	</div>
 </div>
-<!-- <nav class="navbar navbar-light bg-dark mt-3 w-75">
-	<div class="container w-75">
-		<a class="navbar-brand" href="#">
-			<img
-				src="/images/smartborder.png"
-				width="30"
-				height="30"
-				class="d-inline-block align-top me-3"
-				alt=""
-			/>
-			Smart Border Coalition
-		</a>
-		<button class="btn me-0 btn-primary"> Border Wait Time Graph </button>
-	</div>
-</nav> -->
 <div class="container mt-3" style="height: 75vh; ">
 	<div class="row d-flex justify-content-start" style="height: 75vh;">
 		<div class="col-lg-4" style="">
@@ -343,6 +344,7 @@
 			<div class="card" style="height: 75vh;">
 				<div class="card-header text-center bg-blue">
 					<h1 class="text-white">Wait Times</h1>
+					<h4 class="text-white">{lastUpdateDuration} minutes - Last update: {lastUpdate}</h4>
 				</div>
 				<div class="card-body">
 					<div class="d-inline-flex p-2 bd-highlight">
