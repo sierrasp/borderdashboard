@@ -33,6 +33,16 @@ Install Border Dashboard with GitHub
   git clone 'https://github.com/sethmorton/BorderDashboardSkeleton.git'
   cd BorderDashboardSkeleton
 ```
+## Deploying 🛠
+
+Deploy Border Dashboard to GCR
+
+```bash
+docker build -t borderdashboard --platform=linux/amd64 .
+docker tag borderdashboard gcr.io/ssp-all-sites/borderdashboard
+docker push gcr.io/ssp-all-sites/borderdashboard
+```
+
 
 ## Conventions 📝
 

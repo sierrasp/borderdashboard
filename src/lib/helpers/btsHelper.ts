@@ -80,11 +80,12 @@ export class Helper {
     static async getCurrentWaitTimes(port : number) {
         const data = await parse(`https://bwt.cbp.gov/api/bwtRss/rssbyportnum/HTML/POV/${port}`);
         const description = data['items'][0]['description']['$text'];
+        console.log(description);
         const durationReg = /\d{1,3} (min)/gm;
         const noonReg = /Noon PDT/gm
         const midnightReg = /Midnight PDT/gm
         const timestampReg = /\d{1,3}:\d{2} (am|pm)/gm
-        const durationFound = description.match(durationReg);
+        const durationFound : string[] = description.match(durationReg);
         let timestampFound = description.match(timestampReg);
         if (timestampFound == null) {
             timestampFound = []
@@ -104,6 +105,12 @@ export class Helper {
         let waitTimesArray: number[] = [];
         let updateTime: Date = new Date();
         let lastUpdate: string[] = [];
+        /**
+         * If lanes have update pending status.
+         */
+        // if (durationFound == null) {
+            
+        // }
         for (let i = 0; i < durationFound.length; i++) {
             const year = new Date().getFullYear();
             const month = ('0' + (new Date().getMonth() + 1)).slice(-2);
