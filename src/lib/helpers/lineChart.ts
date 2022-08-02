@@ -1,4 +1,4 @@
-import Chart from 'chart.js/auto';
+import Chart from 'chart.js/auto/auto.esm';
 export class lineChart {
     constructor(id : string, labels? : string[]) {
         new Chart(id, {

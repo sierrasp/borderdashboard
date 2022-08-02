@@ -1,5 +1,6 @@
 import type { IBtsData } from "./BtsHelperTypes";
-import { parse } from 'rss-to-json';
+import pkg from 'rss-to-json';
+const { parse } = pkg;
 export class Helper {
     // **** **** **** **** **** **** **** **** **** **** **** **** **** **** **** ****
     // Date Format - "Year-Month-Day"
