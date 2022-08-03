@@ -8,3 +8,9 @@ CREATE TABLE update_pending (
 );
 
  wait_id |        date         | lane_type | delay_seconds | port_num |    daterecorded     |  
+
+
+ SELECT * from rss_times WHERE port_num = 250401 AND lane_type = 0 AND daterecorded IS NOT NULL ORDER BY daterecorded DESC;
+
+
+ SELECT * from rss_times WHERE port_num = 250401 AND lane_type = 0 AND daterecorded IS NOT NULL ORDER BY daterecorded DESC limit 1;

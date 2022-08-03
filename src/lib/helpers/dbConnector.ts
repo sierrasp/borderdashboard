@@ -22,6 +22,7 @@ export default class dbConnector {
       }, // how long a client is allowed to remain idle before being closed
     };
     const pool = new Pool(config);
+    // eslint-disable-next-line no-useless-catch
     try {
       const res = await pool.query(q);
       console.log(res.rows);

@@ -142,6 +142,9 @@
 	 * These dates are for the Svelte Calendar start and end generation
 	 */
 	const CurrentDateObject = new Date(CurrentDate.year, CurrentDate.month - 1, 1);
+		/**
+	 * These dates are for the Svelte Calendar start and end generation
+	 */
 	const PreviousDateObject = new Date(CurrentDate.year - 1, CurrentDate.month - 1, 1);
 	console.log(PreviousDateObject);
 	/**
@@ -160,7 +163,9 @@
 		CurrentDate.month,
 		CurrentDate.day
 	);
-
+	/**
+	 * Get Crossings of People for San Ysidro port (Will update)
+	 */
 	async function getCrossingPeople() {
 		let crossingsPeopleMeasures = PASSENGERS.concat(VEHICLES).concat(['Pedestrians']);
 		return await getCrossingsObject(
@@ -170,7 +175,10 @@
 			'San Ysidro'
 		);
 	};
-	
+	/**
+	 * Handle port selection
+	 * @param event 
+	 */
 	function handleSelect(event: { detail: any }) {
 		console.log('selected item', event.detail);
 		selectedPortNumber = event.detail.value;
@@ -180,9 +188,9 @@
 	 * @param port port number relating to rss feed of cbp. Eg. San Ysidro port number is 250401
 	 */
 	async function setLastUpdate (port = 250401) {
-		let { updateTimes, waitTimesArray } = await Helper.getCurrentWaitTimes(port);
-		lastUpdate = updateTimes[0];
-		lastUpdateDuration = waitTimesArray[0];
+		await Helper.getCurrentWaitTimes(port, 0);
+		// lastUpdate = updateTimes[0];
+		// lastUpdateDuration = waitTimesArray[0];
 	}
 	/*************************** FETCHING POSTGRES DATA ****************************/
 	async function fetchData() {
