@@ -2,7 +2,6 @@
 /** @type {import('@sveltejs/kit').RequestHandler} */
 
 import { dbHelper } from '$lib/model/dbHelper';
-// @ts-ignore
 export async function get({params}) {
   console.log(params)
   if (params.function == "getLastWaitTime") {
@@ -23,3 +22,5 @@ export async function get({params}) {
     status: 404
   };
 }
+
+//src/routes/controller/[function]

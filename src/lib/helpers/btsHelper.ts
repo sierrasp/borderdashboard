@@ -1,5 +1,6 @@
 import type { IBtsData } from "./BtsHelperTypes";
 import parse from 'rss-to-json';
+import { DateTime } from "luxon";
 // import {dbHelper} from './dbHelper'
 // const { parse } = rss_package;
 export class Helper {
@@ -81,6 +82,16 @@ export class Helper {
      */
     static async getCurrentWaitTimes(port_num : number, lane_type : number) {
         // let data = await fetch(`c`)
+        try {
+            console.log(`/controller/getLastWaitTime/${lane_type}/${port_num}`);
+            // const data = await fetch(`controller/getLastWaitTime/${lane_type}/${port_num}`);
+            const data : {date: string, delay_seconds: number}[] = await fetch(`/controller/getLastWaitTime/${lane_type}/${port_num}/`);
+            console.log(data, "hello")
+            let newDate = DateTime.fromSQL(`${data[0].date}`, { zone: 'America/Los_Angeles' });
+            console.log(newDate);
+        } catch (error) {
+            console.log(error);
+        }
     }
 
     async fetchBTS() {
