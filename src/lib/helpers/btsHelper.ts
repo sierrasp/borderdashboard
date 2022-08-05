@@ -68,11 +68,11 @@ export class Helper {
  */
 
     static getCurrentDate() {
-        const currentDate = new Date();
+        const currentDate = DateTime.local().setZone("America/Tijuana");
         return {
-            year: currentDate.getFullYear(),
-            month: currentDate.getMonth() + 1,
-            day: currentDate.getDate()
+            year: currentDate.year,
+            month: currentDate.month,
+            day: currentDate.day
         };
     };
     /**
@@ -81,19 +81,42 @@ export class Helper {
      * @returns An object containing the last updated time (formatted) - Eg. Today at 10:00 pm. Also returns duration in minutes.
      */
     static async getCurrentWaitTimes(port_num : number, lane_type : number) {
-        // let data = await fetch(`c`)
         try {
             console.log(`/controller/getLastWaitTime/${lane_type}/${port_num}`);
-            // const data = await fetch(`controller/getLastWaitTime/${lane_type}/${port_num}`);
-            const data : {date: string, delay_seconds: number}[] = await fetch(`/controller/getLastWaitTime/${lane_type}/${port_num}/`);
-            console.log(data, "hello")
-            let newDate = DateTime.fromSQL(`${data[0].date}`, { zone: 'America/Los_Angeles' });
-            console.log(newDate);
+            // For some reason, I had to put localhost. This NEEDS to change when we put the dashboard on prod.
+            const data : {date: string, delay_seconds: number}[] = await (await fetch(`http://localhost:3000/controller/getLastWaitTime/0/250401`)).json();
+            const newDate = DateTime.fromISO(`${data[0].date}`, { zone: 'America/Los_Angeles' });
+            let returnString = ``;
+            if (this.getCurrentDate().day == newDate.day) {
+                returnString =  `Today at ${this.toAPM(newDate)}`
+            }
+            if ((this.getCurrentDate().day - 1) == newDate.day) {
+                returnString =  `Yesterday at ${this.toAPM(newDate)}`
+            }
+            if (this.getCurrentDate().day != newDate.day) {
+                returnString =  `${newDate.toSQLDate()}`
+            }
+            return {
+                string : returnString,
+                duration : (Number(data[0].delay_seconds)),
+            }
         } catch (error) {
             console.log(error);
         }
     }
-
+    static toAPM(date : DateTime) {
+        let hours = Number(date.hour)
+        const minutes = Number(date.minute)
+        const ampm = hours >= 12 ? 'pm' : 'am';
+      
+        hours = hours % 12;
+        hours = hours ? hours : 12; // the hour '0' should be '12'
+      
+        const minutesString = minutes < 10 ? '0'+minutes : minutes;
+        const strTime = hours + ':' + minutesString + ' ' + ampm;
+      
+        return strTime
+    };
     async fetchBTS() {
         /** Formulate URI for request*/
         if (this.checkStored() == false) {

@@ -188,9 +188,9 @@
 	 * @param port port number relating to rss feed of cbp. Eg. San Ysidro port number is 250401
 	 */
 	async function setLastUpdate (port = 250401) {
-		await Helper.getCurrentWaitTimes(port, 0);
-		// lastUpdate = updateTimes[0];
-		// lastUpdateDuration = waitTimesArray[0];
+		let {string, duration} = await Helper.getCurrentWaitTimes(port, 0);
+		lastUpdate = string;
+		lastUpdateDuration = Math.round(duration / 60);
 	}
 	/*************************** FETCHING POSTGRES DATA ****************************/
 	async function fetchData() {
