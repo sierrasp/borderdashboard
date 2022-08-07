@@ -19,15 +19,16 @@ export class Helper {
  * @param measure  Optional - The type of transportation, Eg. "Bus" or "Pedestrians"
  * @returns a generated request string for the implementation of the Helper object. 
  */
-    constructor(startDate: string, endDate: string, portName?: string, state?: string, measure?: string) {
+    constructor(startDate?: string, endDate?: string, portName?: string, state?: string, measure?: string) {
         // Instead of Callback hell, I've opted for a more streamline approach. 
         // Create objects using the helper class that have these important variables built in.
         const URI = Helper.constructBtsRequest(startDate, endDate, portName, state, measure);
         console.log(URI);
-        this.startDate = startDate;
-        this.endDate = endDate;
+        this.startDate = `${startDate}`;
+        this.endDate = `${endDate}`;
         this.storageID = `${startDate}_to_${endDate}_${portName}`;
         this.URI = URI;
+
     }
     /**
      * 
@@ -38,7 +39,7 @@ export class Helper {
      * @param measure The type of transportation, Eg. "Bus" or "Pedestrians"
      * @returns a generated request string for the implementation of the Helper object. 
      */
-    static constructBtsRequest(startDate: string, endDate: string, portName?: string, state?: string, measure?: string) {
+    static constructBtsRequest(startDate?: string, endDate?: string, portName?: string, state?: string, measure?: string) {
         /**
          * Unreadable ternary check! 😊 
          * If the callback is not null, set the string to something for the SODA api to recognize. Other wise, set it to nothing
@@ -73,50 +74,6 @@ export class Helper {
      * @param port Port needs to represent cbp number of port - Eg. San Ysidro port num = 250401
      * @returns An object containing the last updated time (formatted) - Eg. Today at 10:00 pm. Also returns duration in minutes.
      */
-    static async getCurrentWaitTimes(port_num: number, lane_type: number) {
-        try {
-            let fetchUrl = ``;
-            fetchUrl = `https://borderdashboard.com/controller/getLastWaitTime/${lane_type}/${port_num}`
-            if (dev == true) {
-                fetchUrl = `http://localhost:3000/controller/getLastWaitTime/${lane_type}/${port_num}`
-            }
-            const data: { date: string, delay_seconds: number }[] = await (await (await fetch(fetchUrl)).json())
-            const newDate = DateTime.fromISO(`${data[0].date}`, { zone: 'America/Los_Angeles' });
-            let returnString = ``;
-            if (this.getCurrentDate().day == newDate.day) {
-                console.log(this.getCurrentDate().day, "hello")
-                returnString = `Today at ${this.toAPM(newDate)}`
-            };
-            if ((this.getCurrentDate().day - 1) == newDate.day) {
-                returnString = `Yesterday at ${this.toAPM(newDate)}`
-            }
-            if (this.getCurrentDate().day != newDate.day) {
-                returnString = `${newDate.toSQLDate()}`
-            }
-            return {
-                lastUpdateTime: returnString,
-                lastDelaySeconds: (Number(data[0].delay_seconds)),
-            }
-        } catch (error) {
-            return {
-                lastUpdateTime: `There was an error`,
-                lastDelaySeconds: 0
-            }
-        }
-    }
-    static toAPM(date: DateTime) {
-        let hours = Number(date.hour)
-        const minutes = Number(date.minute)
-        const ampm = hours >= 12 ? 'pm' : 'am';
-
-        hours = hours % 12;
-        hours = hours ? hours : 12; // the hour '0' should be '12'
-
-        const minutesString = minutes < 10 ? '0' + minutes : minutes;
-        const strTime = hours + ':' + minutesString + ' ' + ampm;
-
-        return strTime
-    };
     async fetchBTS() {
         /** Formulate URI for request*/
         if (this.checkStored() == false) {

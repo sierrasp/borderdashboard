@@ -10,9 +10,8 @@ export async function get({params}) {
     let laneNumber = Number(params.laneNumber);
     console.log(portNumber);
     console.log(laneNumber);
-    let rows = await dbHelper.mostRecentByPort(portNumber, laneNumber);
+    let rows = await dbHelper.mostRecentByPort(portNumber);
     console.log(rows);
-    // dbHelper.mostRecentByPort(portNumber, laneNumber);
     return  {
         body: rows
     }
