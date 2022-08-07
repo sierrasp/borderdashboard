@@ -1,10 +1,10 @@
 // import db from '$lib/db';
-/** @type {import('@sveltejs/kit').RequestHandler} */
+// /** @type {import('@sveltejs/kit').RequestHandler} */
 
 import { dbHelper } from '$lib/model/dbHelper';
 export async function get({params}) {
   console.log(params)
-  if (params.function == "getLastWaitTime") {
+  if (params.funcName == "getLastWaitTime") {
     
     let portNumber = Number(params.portNumber);
     let laneNumber = Number(params.laneNumber);

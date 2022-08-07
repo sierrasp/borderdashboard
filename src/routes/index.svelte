@@ -51,9 +51,20 @@
 			}
 		}
 	};
+
+	const PORTS = [
+		{ value: 250401, label: 'San Ysidro' },
+		{ value: 250601, label: 'Otay Mesa' },
+		{ value: 250301, label: 'Calexico East' },
+		{ value: 250302, label: 'Calexico West' }
+]
+	const PASSENGERS = ['Personal Vehicle Passengers', 'Train Passengers', 'Bus Passengers'];
+	const VEHICLES = ['Personal Vehicle', 'Buses', 'Trains'];
 	/**
 	 * This is the last update string for the general lane - Formatted. Eg. Today at 10:00 am.
 	 */
+
+
 	let lastUpdate: string;
 	$: lastUpdate;
 	/**
@@ -78,13 +89,11 @@
 		{ value: 250302, label: 'Calexico West' }
 	];
 	const DropdownDefault = { value: 250401, label: 'San Ysidro' };
-	const PASSENGERS = ['Personal Vehicle Passengers', 'Train Passengers', 'Bus Passengers'];
-	const VEHICLES = ['Personal Vehicle', 'Buses', 'Trains'];
 
 	/*************************** ON MOUNT SECTION  ****************************/
 	onMount(async () => {
 		createDateRangePicker();
-		setLastUpdate(selectedPortNumber);
+		// setLastUpdate(selectedPortNumber);
 	});
 
 	/*************************** DOM FUNCTIONS HANDLING BTS DATA ****************************/
@@ -188,9 +197,9 @@
 	 * @param port port number relating to rss feed of cbp. Eg. San Ysidro port number is 250401
 	 */
 	async function setLastUpdate(port = 250401) {
-		let { string, duration } = await Helper.getCurrentWaitTimes(port, 0);
-		lastUpdate = string;
-		lastUpdateDuration = Math.round(duration / 60);
+		let { lastUpdateTime, lastDelaySeconds } = await Helper.getCurrentWaitTimes(port, 0);
+		lastUpdate = lastUpdateTime;
+		lastUpdateDuration = Math.round(lastDelaySeconds / 60);
 	}
 	/*************************** FETCHING POSTGRES DATA ****************************/
 	async function fetchData() {
@@ -288,12 +297,58 @@
 								/>
 							</div> -->
 						</div>
+						<div class="d-flex flex-column bd-highlight mb-3">
+							<div class="p-2 bd-highlight">Pedestrians Crossed:</div>
+							<!-- <div class="p-2 bd-highlight">Flex item 2</div> -->
+							<div class="d-flex flex-row bd-highlight mb-3 align-items-center">
+								<div class="p-2 bd-highlight">
+									{#await getCrossingPeople()}
+										...Loading
+									{:then object}
+										<h2>{object.Pedestrians}</h2>
+									{:catch error}
+										System error: {error.message}.
+									{/await}
+								</div>
+								<div class="p-2 bd-highlight">
+									<i
+										class="fa fa-arrow-up float-right fa-2xl "
+										style="color: green;"
+										aria-hidden="true"
+									/> 10%
+								</div>
+								<!-- <div class="p-2 bd-highlight">Flex item 3</div> -->
+							</div>
+						</div>
+													<div class="d-flex flex-column bd-highlight mb-3">
+								<div class="p-2 bd-highlight">Pedestrians Crossed:</div>
+								<!-- <div class="p-2 bd-highlight">Flex item 2</div> -->
+								<div class="d-flex flex-row bd-highlight mb-3 align-items-center">
+									<div class="p-2 bd-highlight">
+										{#await getCrossingPeople()}
+											...Loading
+										{:then object}
+											<h2>{object.Pedestrians}</h2>
+										{:catch error}
+											System error: {error.message}.
+										{/await}
+									</div>
+									<div class="p-2 bd-highlight">
+										<i
+											class="fa fa-arrow-up float-right fa-2xl "
+											style="color: green;"
+											aria-hidden="true"
+										/> 10%
+									</div>
+									<!-- <div class="p-2 bd-highlight">Flex item 3</div> -->
+								</div>
+							</div>
 					</div>
 
 					<!-- svelte-ignore a11y-invalid-attribute -->
 					<!-- <a href="" class="btn btn-primary">Go somewhere</a> -->
 				</div>
-				<div class="card-footer text-muted">2 days ago</div>
+				<div class="card-footer text-muted">https://bwt.cbp.gov/details</div>
 			</div>
 
 		</div>
@@ -303,48 +358,95 @@
 					<h1 class="text-white">Crossing of People</h1>
 				</div>
 				<div class="card-body">
-					<div class="d-inline-flex p-2 bd-highlight">
-						<!-- <div class="row text-center"> -->
-						<div class="">
-							<span>In</span>
-							<!-- <Datepicker {theme} selected={previousDateObject} end={currentDateObject}/> -->
-							<!-- <h4 class="p-2 fs-4">to</h4> -->
-							<!-- {#await getPe	destrianValue()} -->
-						</div>
-						<div class="">
-							<h4 class="p-2 fs-4">May, 2021</h4>
-						</div>
-						<div class="">
-							<!-- <h4 class="p-2 fs-4">to</h4> -->
-							<Datepicker {theme} selected={CurrentDateObject} />
-						</div>
-						<!-- </div> -->
-					</div>
 					<div class="container-fluid">
 						<div class="row align-items-center">
-							<div class="col">
-								{#await getCrossingPeople()}
-									...Loading
-								{:then object}
-									{object.Pedestrians}
-								{:catch error}
-									System error: {error.message}.
-								{/await}
-								<h3 class="card-title text-bold pt-3 mb-0" />
-								<span class="card-title pt-0">Pedestrians</span>
+							<div class="d-flex flex-column bd-highlight mb-3">
+								<div class="p-2 bd-highlight">Pedestrians Crossed:</div>
+								<!-- <div class="p-2 bd-highlight">Flex item 2</div> -->
+								<div class="d-flex flex-row bd-highlight mb-3 align-items-center">
+									<div class="p-2 bd-highlight">
+										{#await getCrossingPeople()}
+											...Loading
+										{:then object}
+											<h2>{object.Pedestrians}</h2>
+										{:catch error}
+											System error: {error.message}.
+										{/await}
+									</div>
+									<div class="p-2 bd-highlight">
+										<i
+											class="fa fa-arrow-up float-right fa-2xl "
+											style="color: green;"
+											aria-hidden="true"
+										/> 10%
+									</div>
+									<!-- <div class="p-2 bd-highlight">Flex item 3</div> -->
+								</div>
 							</div>
-							<div class="col d-flex justify-content-end">
+
+							<div class="d-flex flex-column bd-highlight mb-3">
+								<div class="p-2 bd-highlight">Pedestrians Crossed:</div>
+								<!-- <div class="p-2 bd-highlight">Flex item 2</div> -->
+								<div class="d-flex flex-row bd-highlight mb-3 align-items-center">
+									<div class="p-2 bd-highlight">
+										{#await getCrossingPeople()}
+											...Loading
+										{:then object}
+											<h2>{object.Pedestrians}</h2>
+										{:catch error}
+											System error: {error.message}.
+										{/await}
+									</div>
+									<div class="p-2 bd-highlight">
+										<i
+											class="fa fa-arrow-up float-right fa-2xl "
+											style="color: green;"
+											aria-hidden="true"
+										/> 10%
+									</div>
+									<!-- <div class="p-2 bd-highlight">Flex item 3</div> -->
+								</div>
+							</div>
+
+							<div class="d-flex flex-column bd-highlight mb-3">
+								<div class="p-2 bd-highlight">Pedestrians Crossed:</div>
+								<!-- <div class="p-2 bd-highlight">Flex item 2</div> -->
+								<div class="d-flex flex-row bd-highlight mb-3 align-items-center">
+									<div class="p-2 bd-highlight">
+										{#await getCrossingPeople()}
+											...Loading
+										{:then object}
+											<h2>{object.Pedestrians}</h2>
+										{:catch error}
+											System error: {error.message}.
+										{/await}
+									</div>
+									<div class="p-2 bd-highlight">
+										<i
+											class="fa fa-arrow-up float-right fa-2xl "
+											style="color: green;"
+											aria-hidden="true"
+										/> 10%
+									</div>
+									<!-- <div class="p-2 bd-highlight">Flex item 3</div> -->
+								</div>
+							</div>
+							<!-- <div class="col">
+								<h3 class="card-title text-bold pt-3 mb-0" />
+								<h5 class="card-title pt-0">Pedestrians</h5>
+							</div> -->
+							<!-- <div class="col d-flex justify-content-end">
 								<i
 									class="fa fa-arrow-up float-right fa-2xl "
 									style="color: green;"
 									aria-hidden="true"
 								/>
-							</div>
+							</div> -->
 						</div>
 					</div>
 
 					<!-- svelte-ignore a11y-invalid-attribute -->
-					<a href="" class="btn btn-primary">Go somewhere</a>
+					<!-- <a href="" class="btn btn-primary">Go somewhere</a> -->
 				</div>
 				<div class="card-footer text-muted">https://bwt.cbp.gov/details</div>
 			</div>
@@ -352,48 +454,62 @@
 		<div class="col-lg-4" style="">
 			<div class="card" style="height: 75vh;">
 				<div class="card-header text-center bg-purple">
-					<h3 class="text-white">Current Wait Times - {lastUpdate}</h3>
+					<h2 class="text-white">Current Wait Times - {lastUpdate}</h2>
 				</div>
-				<div class="card-body " style="height: 60vh;">
-					<!-- <div class="card-header">
-					<h4 class="">{lastUpdateDuration}</h4>
-				</div> -->
-					<div class="d-flex flex-column bd-highlight mb-3">
-						<!-- <div class=" bd-highlight"><h3>{lastUpdateDuration} minutes</h3> </div> -->
-						<div class=" bd-highlight">
-							<div class="d-flex flex-row bd-highlight  align-items-center">
-								<h3 class="w-100">{lastUpdateDuration} minutes</h3>
-								<div class=" bd-highligh pt-3 mt-3">
-									<i class="fa fa-arrow-up fa-2xl " style="color: green;" aria-hidden="true" /> 10%
+				<div class="card-body">
+					<div class="container-fluid">
+						<div class="row align-items-center">
+							<div class="d-flex flex-column bd-highlight mb-3">
+								<!-- <div class=" bd-highlight"><h3>{lastUpdateDuration} minutes</h3> </div> -->
+								<div class=" bd-highlight">
+									<div class="d-flex flex-row bd-highlight  align-items-center">
+										<h3 class="w-100">{lastUpdateDuration} minutes</h3>
+										<div class=" bd-highligh pt-3 mt-3">
+											<i class="fa fa-arrow-up fa-2xl " style="color: green;" aria-hidden="true" /> 10%
+										</div>
+		
+										<!-- <div class="p-2 bd-highlight">Flex item 3</div> -->
+									</div>
+									<div class=" bd-highlight"><h5>San Ysidro All</h5></div>
 								</div>
+							</div>
+						</div>
+						<div class="row align-items-center">
+							<div class="d-flex flex-column bd-highlight mb-3">
+								<!-- <div class=" bd-highlight"><h3>{lastUpdateDuration} minutes</h3> </div> -->
+								<div class=" bd-highlight">
+									<div class="d-flex flex-row bd-highlight  align-items-center">
+										<h3 class="w-100">50 minutes</h3>
+										<div class=" bd-highligh pt-3 mt-3">
+											<i class="fa fa-arrow-up fa-2xl " style="color: green;" aria-hidden="true" /> 10%
+										</div>
+		
+										<!-- <div class="p-2 bd-highlight">Flex item 3</div> -->
+									</div>
+									<div class=" bd-highlight"><h5>San Ysidro Ready</h5></div>
+								</div>
+							</div>
+							<!-- <div class="col">
+								<h3 class="card-title text-bold pt-3 mb-0" />
+								<h5 class="card-title pt-0">Pedestrians</h5>
+							</div> -->
+							<!-- <div class="col d-flex justify-content-end">
+								<i
+									class="fa fa-arrow-up float-right fa-2xl "
+									style="color: green;"
+									aria-hidden="true"
+								/>
+							</div> -->
+						</div>
+					</div>
 
-								<!-- <div class="p-2 bd-highlight">Flex item 3</div> -->
-							</div>
-							<div class=" bd-highlight"><h5>San Ysidro All</h5></div>
-						</div>
-					</div>
-					<div class=" bd-highlight">
-						<div class="d-flex flex-row bd-highlight  align-items-center">
-							<h3 class="w-100">50 minutes</h3>
-							<div class=" bd-highligh pt-3 mt-3">
-								<i class="fa fa-arrow-up fa-2xl " style="color: green;" aria-hidden="true" /> 10%
-							</div>
-						</div>
-						<div class=" bd-highlight"><h5>San Ysidro Ready</h5></div>
-					</div>
-					<div class=" bd-highlight">
-						<div class="d-flex flex-row bd-highlight  align-items-center">
-							<h3 class="w-100">50 minutes</h3>
-							<div class=" bd-highligh pt-3 mt-3">
-								<i class="fa fa-arrow-up fa-2xl " style="color: green;" aria-hidden="true" /> 10%
-							</div>
-						</div>
-						<div class=" bd-highlight"><h5>San Ysidro Ready</h5></div>
-					</div>
+					<!-- svelte-ignore a11y-invalid-attribute -->
+					<!-- <a href="" class="btn btn-primary">Go somewhere</a> -->
 				</div>
+				<div class="card-footer text-muted">https://bwt.cbp.gov/details</div>
 			</div>
-			<div class="card-footer text-muted">2 days ago</div>
 		</div>
+
 		<!-- </div> -->
 		<!-- <div class="col container-md">
 			<div class="card text-center" style="height: 75vh;">

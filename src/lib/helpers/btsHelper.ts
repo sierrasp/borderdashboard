@@ -1,8 +1,6 @@
 import type { IBtsData } from "./BtsHelperTypes";
-import parse from 'rss-to-json';
 import { DateTime } from "luxon";
-// import {dbHelper} from './dbHelper'
-// const { parse } = rss_package;
+import { dev } from '$app/env';
 export class Helper {
     // **** **** **** **** **** **** **** **** **** **** **** **** **** **** **** ****
     // Date Format - "Year-Month-Day"
@@ -68,53 +66,55 @@ export class Helper {
  */
 
     static getCurrentDate() {
-        const currentDate = DateTime.local().setZone("America/Tijuana");
-        return {
-            year: currentDate.year,
-            month: currentDate.month,
-            day: currentDate.day
-        };
+        return DateTime.local().setZone("America/Tijuana");
     };
     /**
      * 
      * @param port Port needs to represent cbp number of port - Eg. San Ysidro port num = 250401
      * @returns An object containing the last updated time (formatted) - Eg. Today at 10:00 pm. Also returns duration in minutes.
      */
-    static async getCurrentWaitTimes(port_num : number, lane_type : number) {
+    static async getCurrentWaitTimes(port_num: number, lane_type: number) {
         try {
-            console.log(`/controller/getLastWaitTime/${lane_type}/${port_num}`);
-            // For some reason, I had to put localhost. This NEEDS to change when we put the dashboard on prod.
-            const data : {date: string, delay_seconds: number}[] = await (await fetch(`http://localhost:3000/controller/getLastWaitTime/0/250401`)).json();
+            let fetchUrl = ``;
+            fetchUrl = `https://borderdashboard.com/controller/getLastWaitTime/${lane_type}/${port_num}`
+            if (dev == true) {
+                fetchUrl = `http://localhost:3000/controller/getLastWaitTime/${lane_type}/${port_num}`
+            }
+            const data: { date: string, delay_seconds: number }[] = await (await (await fetch(fetchUrl)).json())
             const newDate = DateTime.fromISO(`${data[0].date}`, { zone: 'America/Los_Angeles' });
             let returnString = ``;
             if (this.getCurrentDate().day == newDate.day) {
-                returnString =  `Today at ${this.toAPM(newDate)}`
-            }
+                console.log(this.getCurrentDate().day, "hello")
+                returnString = `Today at ${this.toAPM(newDate)}`
+            };
             if ((this.getCurrentDate().day - 1) == newDate.day) {
-                returnString =  `Yesterday at ${this.toAPM(newDate)}`
+                returnString = `Yesterday at ${this.toAPM(newDate)}`
             }
             if (this.getCurrentDate().day != newDate.day) {
-                returnString =  `${newDate.toSQLDate()}`
+                returnString = `${newDate.toSQLDate()}`
             }
             return {
-                string : returnString,
-                duration : (Number(data[0].delay_seconds)),
+                lastUpdateTime: returnString,
+                lastDelaySeconds: (Number(data[0].delay_seconds)),
             }
         } catch (error) {
-            console.log(error);
+            return {
+                lastUpdateTime: `There was an error`,
+                lastDelaySeconds: 0
+            }
         }
     }
-    static toAPM(date : DateTime) {
+    static toAPM(date: DateTime) {
         let hours = Number(date.hour)
         const minutes = Number(date.minute)
         const ampm = hours >= 12 ? 'pm' : 'am';
-      
+
         hours = hours % 12;
         hours = hours ? hours : 12; // the hour '0' should be '12'
-      
-        const minutesString = minutes < 10 ? '0'+minutes : minutes;
+
+        const minutesString = minutes < 10 ? '0' + minutes : minutes;
         const strTime = hours + ':' + minutesString + ' ' + ampm;
-      
+
         return strTime
     };
     async fetchBTS() {
