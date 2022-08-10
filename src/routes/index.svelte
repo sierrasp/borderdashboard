@@ -240,7 +240,7 @@
 			};
 		}
 		btsObject = objectToBeReturned;
-		console.log(btsObject);
+		// console.log(btsObject);
 	}
 
 	/*************************** DOM FUNCTIONS HANDLING BTS DATA ****************************/
