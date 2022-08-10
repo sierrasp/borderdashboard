@@ -47,6 +47,7 @@ export class Helper {
         const portString = (portName != null) ? `&port_name=${portName}` : ``;
         const stateString = (state != null) ? `&state=${state}` : ``;
         const measureString = (measure != null) ? `&measure=${measure}` : ``;
+        console.log(`https://data.transportation.gov/resource/keg4-3bc2.json?$limit=100000&$where=date between '${startDate}T00:00:00.000' and '${endDate}T00:00:00.000'&border=US-Mexico Border${stateString}${measureString}${portString}`);
         return `https://data.transportation.gov/resource/keg4-3bc2.json?$limit=100000&$where=date between '${startDate}T00:00:00.000' and '${endDate}T00:00:00.000'&border=US-Mexico Border${stateString}${measureString}${portString}`
     }
     /**
@@ -56,11 +57,15 @@ export class Helper {
      * @param day Eg. 1 - Using splice for any digits under 10, so don't worry about that
      * @returns A date string for class generation, Eg. "2019-01-01"
      */
-    static dateFormatGenerator(year: number, month: number, day: number) {
+    static dateFormatGenerator(date : Date) {
+
+        const year = date.getFullYear();
+        const month = date.getMonth() + 1;
+        const day = date.getDate();
         const slicedMonth = ('0' + month).slice(-2);
         const slicedDay = ('0' + day).slice(-2); // '11'
         return `${year}-${slicedMonth}-${slicedDay}`;
-    }
+    };
     /**
  * A function to get the current date object
  * @returns An object with current year, current month, and current day. Eg, {year : 2022, month : 9, day : 1}
@@ -69,6 +74,21 @@ export class Helper {
     static getCurrentDate() {
         return DateTime.local().setZone("America/Tijuana");
     };
+    /**
+     * 
+     * @param date A formatted date string 
+     * @returns A formatted date string with the year prior
+     */
+    static calculatePreviousDate(date : string) {
+        const luxonDate = DateTime.fromFormat(date, 'yyyy-MM-dd');
+        const slicedMonth = ('0' + luxonDate.month).slice(-2);
+        const slicedDay = ('0' + luxonDate.day).slice(-2);
+        console.log(luxonDate);
+        return `${luxonDate.year -1}-${slicedMonth}-${slicedDay}`
+    };
+    static calculatePercentDifference(newNumber : number, oldNumber : number) {
+        return Math.round(((newNumber - oldNumber) / oldNumber) * 100);
+    }
     /**
      * 
      * @param port Port needs to represent cbp number of port - Eg. San Ysidro port num = 250401
@@ -105,7 +125,8 @@ export class Helper {
             });
             measureObject[measure] = measureSum;
 
-        });
+        });;
+        console.log(measureObject);
         return measureObject;
     }
     store(data: IBtsData[]) {

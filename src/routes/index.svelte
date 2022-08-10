@@ -15,7 +15,7 @@
 	/**
 	 * Svelte Strap doesn't work with svelte kit, so I had to use this workaround - npm i git+https://github.com/laxadev/sveltestrap.git
 	 */
-	import { ButtonDropdown, DropdownItem, DropdownMenu, DropdownToggle } from 'sveltestrap';
+	import { Tooltip } from 'sveltestrap';
 	import Select from 'svelte-select';
 
 	/*************************** CONSTANTS AND GLOBAL VARIABLE DEFINING ****************************/
@@ -57,10 +57,48 @@
 		{ value: 250401, label: 'San Ysidro' },
 		{ value: 250601, label: 'Otay Mesa' },
 		{ value: 250301, label: 'Calexico East' },
-		{ value: 250302, label: 'Calexico West' }
 	];
 	const PASSENGERS = ['Personal Vehicle Passengers', 'Train Passengers', 'Bus Passengers'];
-	const VEHICLES = ['Personal Vehicle', 'Buses', 'Trains'];
+	const VEHICLES = ['Personal Vehicles', 'Buses', 'Trains'];
+	const PEDESTRIANS = ['Pedestrians'];
+	const TRUCKS = ['Trucks'];
+	const mergedArray = { Pedestrians: PEDESTRIANS, Vehicles: VEHICLES, Passengers: PASSENGERS, Trucks : TRUCKS };
+
+	/** I'm going to use the constants given above to create a default for the btsObject so the program doesn't throw an error on load*/
+
+	let btsObject: { [key: string]: { currentCount: number; percentChange: number } } = {};
+	for (const key in mergedArray) {
+		btsObject[key] = {
+			currentCount: 0,
+			percentChange: 0
+		};
+	}
+	$: btsObject;
+	let waitTimesObj = {
+		lastUpdateTime: "",
+		waitTimes: {
+			generalLane: {
+				delay: 0,
+				average: 0,
+				percentChange: 0,
+			},
+			sentriLane: {
+				delay: 0,
+				average: 0,
+				percentChange: 0,
+			},
+			readyLane: {
+				delay: 0,
+				average: 0,
+				percentChange: 0,
+			},
+		},
+	};
+	$: waitTimesObj;
+	/**
+	 * We want to do everything once the dom has loaded
+	 */
+	let pageLoaded = false;
 	/**
 	 * When data was last updated in database - Eg. "Today at 10:00pm"
 	 */
@@ -70,28 +108,68 @@
 	 * General Lane Duration
 	 */
 	let lastUpdateDurationGeneral: number;
-		/**
+	/**
 	 * General Lane Duration
 	 */
 	let lastUpdateDurationSentri: number;
-		/**
+	/**
 	 * General Lane Duration
 	 */
 	let lastUpdateDurationReady: number;
 	/**
-	 * Selected Port Number - Default : San Ysidro 
+	 * Selected Port Number - Default : San Ysidro
 	 */
 	let selectedPortNumber: number;
-		/**
-	 * Selected Port Name - Default : San Ysidro 
+	/**
+	 * Selected Port Name - Default : San Ysidro
 	 */
-	let selectedPortName : string;
+	let selectedPortName: string;
 	$: selectedPortNumber = 250401;
 	$: selectedPortName = `San Ysidro`;
+	/**
+	 * If port number has changed.
+	 */
 	$: {
-		console.log(selectedPortNumber);
-		setLastUpdate(selectedPortNumber);
+		if (pageLoaded) {
+			setLastUpdate(selectedPortNumber);
+			getBtsGroup(mergedArray);
+		}
 	}
+
+	/**
+	 * Global starting date for number generation. Eg. "2020-01-01"
+	 */
+	let startDate: string;
+	$: startDate = pastDateFormatted;
+	/**
+	 * Global end date for number generation. Eg. "2021-01-01"
+	 */
+	let endDate: string;
+	$: endDate = currentDateFormatted;
+
+	/**
+	 * Updating previous dates based on changes in dates based on date selector
+	 */
+	$: {
+		previousEndDate = Helper.calculatePreviousDate(endDate);
+		previousStartDate = Helper.calculatePreviousDate(startDate);
+		if (pageLoaded) {
+			getBtsGroup(mergedArray);
+		}
+	}
+
+	/**
+	 * This is the global starting date subtracted a year, this is for the percent calculation
+	 */
+	let previousStartDate: string;
+	// $: previousStartDate = "2020-01-01";
+
+	/**
+	 * This is the global ending date subtracted a year, this is for the percent calculation
+	 */
+	let previousEndDate: string;
+	// $: previousEndDate = "2020-01-01";
+
 	/**
 	 * Dropdown Ports with Label and Port code as value
 	 */
@@ -101,14 +179,9 @@
 	/*************************** ON MOUNT SECTION  ****************************/
 	onMount(async () => {
 		createDateRangePicker();
-		// setLastUpdate(selectedPortNumber);
-		console.log(
-			await getCrossingsObject(['Personal Vehicles'], '2021-01-01', '2022-01-01', 'San Ysidro')
-		);
+		pageLoaded = true;
 	});
-
-	/*************************** DOM FUNCTIONS HANDLING BTS DATA ****************************/
-
+	/*************************** DATE SELECTOR ****************************/
 	/**
 	 * Create Date Range Picker using dom acccess. We're using current dates, so the calendar will be updated consistently
 	 */
@@ -130,14 +203,48 @@
 			format: 'DD MMM YYYY',
 			setup(picker) {
 				picker.on('select', (e) => {
-					var startdate = e.detail.start;
-					var enddate = e.detail.end;
-					console.log(startdate);
-					console.log(enddate);
+					const startdate: Date = e.detail.start;
+					const enddate: Date = e.detail.end;
+					startDate = Helper.dateFormatGenerator(startdate);
+					endDate = Helper.dateFormatGenerator(enddate);
 				});
 			}
 		});
 	}
+	/**
+	 * So this function takes in an object of whatever subgroups I want to calculate for - Eg. If I want to calculate for the pedestrians and a subset of measures called "Vehicles",
+	 *
+	 * @param obj I can pass in {"Pedestrians" : PEDESTRIANS, "Vehicles" : VEHICLES} for example
+	 * @returns This updates the global btsObject variable with the count of each measure and the percent of change since the previous date calculated above
+	 */
+	async function getBtsGroup(obj: Record<string, string[]>) {
+		/**
+		 * This object will be sommething like -
+		 * 	"Vehicles" : {currentCount : 100000, percentChange : 10%}
+		 */
+		let objectToBeReturned: { [key: string]: { currentCount: number; percentChange: number } } = {};
+		for (const key in obj) {
+			let currentObj = await getCrossingsObject(obj[key], startDate, endDate, selectedPortName);
+			let previousObj = await getCrossingsObject(
+				obj[key],
+				previousStartDate,
+				previousEndDate,
+				selectedPortName
+			);
+			let currentCount = Object.values(currentObj).reduce((a, b) => a + b);
+			let previousCount = Object.values(previousObj).reduce((a, b) => a + b);
+			let percentChange = Helper.calculatePercentDifference(currentCount, previousCount);
+			objectToBeReturned[key] = {
+				currentCount: currentCount,
+				percentChange: percentChange
+			};
+		}
+		btsObject = objectToBeReturned;
+		console.log(btsObject);
+	}
+
+	/*************************** DOM FUNCTIONS HANDLING BTS DATA ****************************/
+
 	/**
 	 
 	 * @property Possible Measures - ["Pedestrians", "Trains", "Buses", "Personal Vehicle Passengers", "Personal Vehicles", "Trucks", "Train Passengers", "Bus Passengers"]
@@ -166,35 +273,18 @@
 	 * These dates are for the Svelte Calendar start and end generation
 	 */
 	const PreviousDateObject = new Date(CurrentDate.year - 1, CurrentDate.month - 1, 1);
-	console.log(PreviousDateObject);
+	// console.log(PreviousDateObject);
+
 	/**
 	 * This is the current date
 	 */
-	let currentDateFormatted = Helper.dateFormatGenerator(
-		CurrentDate.year,
-		CurrentDate.month,
-		CurrentDate.day
-	);
+	let currentDateFormatted = Helper.dateFormatGenerator(CurrentDateObject);
 	/**
 	 * This is the date a year ago relative to the current date
 	 */
-	let pastDateFormatted = Helper.dateFormatGenerator(
-		CurrentDate.year - 1,
-		CurrentDate.month,
-		CurrentDate.day
-	);
-	/**
-	 * Get Crossings of People for San Ysidro port (Will update)
-	 */
-	async function getCrossingPeople() {
-		let crossingsPeopleMeasures = PASSENGERS.concat(VEHICLES).concat(['Pedestrians']);
-		return await getCrossingsObject(
-			crossingsPeopleMeasures,
-			pastDateFormatted,
-			currentDateFormatted,
-			'San Ysidro'
-		);
-	}
+	let pastDateFormatted = Helper.dateFormatGenerator(PreviousDateObject);
+
+	/*************************** PORT SELECTION  ****************************/
 	/**
 	 * Handle port selection
 	 * @param event
@@ -210,11 +300,8 @@
 	 */
 	async function setLastUpdate(port = 250401) {
 		let waitTimeClass = new waitTimes(port);
-		let waitTimeObj = await waitTimeClass.getCurrentWaitTimes();
-		lastUpdateDurationGeneral = waitTimeObj.waitTimes.generalLane;
-		lastUpdateDurationSentri = waitTimeObj.waitTimes.sentriLane;
-		lastUpdateDurationReady = waitTimeObj.waitTimes.readyLane;
-		lastUpdate = waitTimeObj.lastUpdateTime;
+		waitTimesObj = await waitTimeClass.getCurrentWaitTimes();
+		console.log(waitTimesObj.lastUpdateTime)
 	}
 	/*************************** FETCHING POSTGRES DATA ****************************/
 	async function fetchData() {
@@ -273,30 +360,25 @@
 		<div class="col-lg-4" style="">
 			<div class="card" style="height: 75vh;">
 				<div class="card-header text-center bg-green">
-					<h1 class="text-white">Crossing of Goods</h1>
+					<h1 class="text-white">Crossing of People</h1>
 				</div>
 				<div class="card-body">
 					<div class="container-fluid">
 						<div class="row align-items-center">
 							<div class="d-flex flex-column bd-highlight mb-3">
-								<div class="p-2 bd-highlight">Pedestrians Crossed:</div>
-								<!-- <div class="p-2 bd-highlight">Flex item 2</div> -->
+								<div class="p-2 bd-highlight">Vehicles Crossed:</div>
+								<!-- <div class="p-2 bd-ate">Flex item 2</div> -->
 								<div class="d-flex flex-row bd-highlight mb-3 align-items-center">
 									<div class="p-2 bd-highlight">
-										{#await getCrossingPeople()}
-											...Loading
-										{:then object}
-											<h2>{object.Pedestrians}</h2>
-										{:catch error}
-											System error: {error.message}.
-										{/await}
+										{btsObject.Vehicles.currentCount}
 									</div>
 									<div class="p-2 bd-highlight">
 										<i
 											class="fa fa-arrow-up float-right fa-2xl "
 											style="color: green;"
 											aria-hidden="true"
-										/> 10%
+										/>
+										{btsObject.Vehicles.percentChange}%
 									</div>
 									<!-- <div class="p-2 bd-highlight">Flex item 3</div> -->
 								</div>
@@ -318,43 +400,33 @@
 							<!-- <div class="p-2 bd-highlight">Flex item 2</div> -->
 							<div class="d-flex flex-row bd-highlight mb-3 align-items-center">
 								<div class="p-2 bd-highlight">
-									{#await getCrossingPeople()}
-										...Loading
-									{:then object}
-										<h2>{object.Pedestrians}</h2>
-									{:catch error}
-										System error: {error.message}.
-									{/await}
+									{btsObject.Pedestrians.currentCount}
 								</div>
 								<div class="p-2 bd-highlight">
 									<i
 										class="fa fa-arrow-up float-right fa-2xl "
 										style="color: green;"
 										aria-hidden="true"
-									/> 10%
+									/>
+									{btsObject.Pedestrians.percentChange}%
 								</div>
 								<!-- <div class="p-2 bd-highlight">Flex item 3</div> -->
 							</div>
 						</div>
 						<div class="d-flex flex-column bd-highlight mb-3">
-							<div class="p-2 bd-highlight">Pedestrians Crossed:</div>
+							<div class="p-2 bd-highlight">Passengers</div>
 							<!-- <div class="p-2 bd-highlight">Flex item 2</div> -->
 							<div class="d-flex flex-row bd-highlight mb-3 align-items-center">
 								<div class="p-2 bd-highlight">
-									{#await getCrossingPeople()}
-										...Loading
-									{:then object}
-										<h2>{object.Pedestrians}</h2>
-									{:catch error}
-										System error: {error.message}.
-									{/await}
+									{btsObject.Passengers.currentCount}
 								</div>
 								<div class="p-2 bd-highlight">
 									<i
 										class="fa fa-arrow-up float-right fa-2xl "
 										style="color: green;"
 										aria-hidden="true"
-									/> 10%
+									/>
+									{btsObject.Passengers.percentChange}%
 								</div>
 								<!-- <div class="p-2 bd-highlight">Flex item 3</div> -->
 							</div>
@@ -371,23 +443,43 @@
 		<div class="col-lg-4" style="">
 			<div class="card" style="height: 75vh;">
 				<div class="card-header text-center bg-blue">
-					<h1 class="text-white">Crossing of People</h1>
+					<h1 class="text-white">Crossing of Goods</h1>
 				</div>
 				<div class="card-body">
 					<div class="container-fluid">
 						<div class="row align-items-center">
 							<div class="d-flex flex-column bd-highlight mb-3">
+								<div class="d-flex flex-column bd-highlight mb-3">
+									<div class="p-2 bd-highlight">Vehicles Crossed:</div>
+									<!-- <div class="p-2 bd-ate">Flex item 2</div> -->
+									<div class="d-flex flex-row bd-highlight mb-3 align-items-center">
+										<div class="p-2 bd-highlight">
+											{btsObject.Trucks.currentCount}
+										</div>
+										<div class="p-2 bd-highlight">
+											<i
+												class="fa fa-arrow-up float-right fa-2xl "
+												style="color: green;"
+												aria-hidden="true"
+											/>
+											{btsObject.Trucks.percentChange}%
+										</div>
+										<!-- <div class="p-2 bd-highlight">Flex item 3</div> -->
+									</div>
+								</div>
+							</div>
+							<div class="d-flex flex-column bd-highlight mb-3">
 								<div class="p-2 bd-highlight">Pedestrians Crossed:</div>
 								<!-- <div class="p-2 bd-highlight">Flex item 2</div> -->
 								<div class="d-flex flex-row bd-highlight mb-3 align-items-center">
 									<div class="p-2 bd-highlight">
-										{#await getCrossingPeople()}
+										<!-- {#await getCrossingPeople()}
 											...Loading
 										{:then object}
 											<h2>{object.Pedestrians}</h2>
 										{:catch error}
 											System error: {error.message}.
-										{/await}
+										{/await} -->
 									</div>
 									<div class="p-2 bd-highlight">
 										<i
@@ -405,37 +497,13 @@
 								<!-- <div class="p-2 bd-highlight">Flex item 2</div> -->
 								<div class="d-flex flex-row bd-highlight mb-3 align-items-center">
 									<div class="p-2 bd-highlight">
-										{#await getCrossingPeople()}
+										<!-- {#await getCrossingPeople()}
 											...Loading
 										{:then object}
 											<h2>{object.Pedestrians}</h2>
 										{:catch error}
 											System error: {error.message}.
-										{/await}
-									</div>
-									<div class="p-2 bd-highlight">
-										<i
-											class="fa fa-arrow-up float-right fa-2xl "
-											style="color: green;"
-											aria-hidden="true"
-										/> 10%
-									</div>
-									<!-- <div class="p-2 bd-highlight">Flex item 3</div> -->
-								</div>
-							</div>
-
-							<div class="d-flex flex-column bd-highlight mb-3">
-								<div class="p-2 bd-highlight">Pedestrians Crossed:</div>
-								<!-- <div class="p-2 bd-highlight">Flex item 2</div> -->
-								<div class="d-flex flex-row bd-highlight mb-3 align-items-center">
-									<div class="p-2 bd-highlight">
-										{#await getCrossingPeople()}
-											...Loading
-										{:then object}
-											<h2>{object.Pedestrians}</h2>
-										{:catch error}
-											System error: {error.message}.
-										{/await}
+										{/await} -->
 									</div>
 									<div class="p-2 bd-highlight">
 										<i
@@ -459,18 +527,19 @@
 		<!-- Wait Times -->
 		<div class="col-lg-4" style="">
 			<div class="card" style="height: 75vh;">
-				<div class="card-header text-center bg-purple " >
+				<div class="card-header text-center bg-purple ">
 					<h1 class="text-white">Current Wait Times</h1>
 				</div>
 				<div class="card-body">
-					<h5 class="card-title" style='border: 1px solid black'>Last Updated: {lastUpdate}</h5>
+					<h5 class="card-title" style="border: 1px solid black">Last Updated: {waitTimesObj.lastUpdateTime}</h5>
 					<div class="container-fluid">
 						<div class="row align-items-center">
 							<div class="d-flex flex-column bd-highlight mb-3">
 								<div class="p-2 bd-highlight">{selectedPortName} All Traffic Lane</div>
 								<div class="d-flex flex-row bd-highlight mb-3 align-items-center">
 									<div class="p-2 bd-highlight">
-										<h1>{lastUpdateDurationGeneral} minutes</h1>
+										<h1>{waitTimesObj.waitTimes.generalLane.delay} minutes</h1>
+										A {waitTimesObj.waitTimes.generalLane.percentChange}% percent change from an average of {waitTimesObj.waitTimes.generalLane.average} minutes over 2022 Apr 1 to {CurrentDate.toFormat('yyyy LLL dd')}
 									</div>
 									<div class="p-2 bd-highlight">
 										<i
@@ -479,6 +548,12 @@
 											aria-hidden="true"
 										/> 10%
 									</div>
+									<div class="px-0 bd-highlight">
+										<i class="fa-solid fa-circle-info" id="tooltip-one" />
+										<Tooltip target="tooltip-one" placement="right">
+											<strong>Hello</strong> <i>World</i>!
+										</Tooltip>
+									</div>
 								</div>
 							</div>
 							<div class="d-flex flex-column bd-highlight mb-3">
@@ -486,7 +561,8 @@
 								<!-- <div class="p-2 bd-highlight">Flex item 2</div> -->
 								<div class="d-flex flex-row bd-highlight mb-3 align-items-center">
 									<div class="p-2 bd-highlight">
-										<h1>{lastUpdateDurationSentri} minutes</h1>
+										<h1>{waitTimesObj.waitTimes.sentriLane.delay} minutes</h1>
+										A {waitTimesObj.waitTimes.sentriLane.percentChange}% percent change from an average of {waitTimesObj.waitTimes.sentriLane.average} minutes over 2022 Apr 1 to {CurrentDate.toFormat('yyyy LLL dd')}
 									</div>
 									<div class="p-2 bd-highlight">
 										<i
@@ -503,7 +579,8 @@
 								<!-- <div class="p-2 bd-highlight">Flex item 2</div> -->
 								<div class="d-flex flex-row bd-highlight mb-3 align-items-center">
 									<div class="p-2 bd-highlight">
-										<h1>{lastUpdateDurationReady} minutes</h1>
+										<h1>{waitTimesObj.waitTimes.readyLane.delay} minutes</h1>
+										A {waitTimesObj.waitTimes.sentriLane.percentChange}% percent change from an average of {waitTimesObj.waitTimes.sentriLane.average} minutes over 2022 Apr 1 to {CurrentDate.toFormat('yyyy LLL dd')}
 									</div>
 									<div class="p-2 bd-highlight">
 										<i

@@ -11,51 +11,91 @@ export default class waitTimes {
     async getCurrentWaitTimes() {
         // let storageID = 
         try {
-            let fetchUrl = ``;
-            fetchUrl = `https://borderdashboard.com/controller/getLastWaitTime/0/${this.portNum}`
+            let lastWaitTimeURI = ``;
+            let averageWaitTimeURI = ``;
+            lastWaitTimeURI = `https://borderdashboard.com/controller/getLastWaitTimes/${this.portNum}`;
+            averageWaitTimeURI = `https://borderdashboard.com/controller/getAverageWaitTimes/${this.portNum}`;
             if (dev == true) {
-                fetchUrl = `http://localhost:3000/controller/getLastWaitTime/0/${this.portNum}`
-            }
-            const data: { daterecorded: string, delay_seconds: number, lane_type: number }[] = await (await (await fetch(fetchUrl)).json())
-            const newDate = DateTime.fromISO(`${data[0].daterecorded}`, { zone: 'America/Los_Angeles' });
+                lastWaitTimeURI = `http://localhost:3000/controller/getLastWaitTimes/${this.portNum}`;
+                averageWaitTimeURI = `http://localhost:3000/controller/getAverageWaitTimes/${this.portNum}`;
+            };
+
+            const lastWaitTimes: { daterecorded: string, delay_seconds: number, lane_type: number }[] = await (await (await fetch(lastWaitTimeURI)).json());
+            const averageWaitTimes : {Average_Delay : string, Day_of_Week : number,  lane_type : number}[] = await (await (await fetch(averageWaitTimeURI)).json());
+            const newDate = DateTime.fromISO(`${lastWaitTimes[0].daterecorded}`, { zone: 'America/Los_Angeles' });
             let returnString = ``;
             if (Helper.getCurrentDate().day == newDate.day) {
-                console.log(Helper.getCurrentDate().day, "hello")
-                returnString = `Today at ${this.toAPM(newDate)}`
+                returnString = `Today at ${this.toAPM(newDate)}`;
             }
-            // console.log(newDate.day)
             else if (newDate.day == Helper.getCurrentDate().day - 1) {
-                console.log(newDate.day, "HELLOOOO")
-                returnString = `Yesterday at ${this.toAPM(newDate)}`
+                returnString = `Yesterday at ${this.toAPM(newDate)}`;
             }
             else {
-                returnString = `${newDate.toSQLDate()}`
-            }
+                returnString = `${newDate.toSQLDate()}`;
+            };
+            console.log(returnString);
+            // let's have some variable spam
+            const generalDelay = Math.round(Number(lastWaitTimes[0].delay_seconds) / 60); 
+            const generalAverage = Math.round(Number(averageWaitTimes[0].Average_Delay) / 60);
+            const generalPercentChange = Helper.calculatePercentDifference(generalDelay, generalAverage);
+            const sentriDelay = Math.round(Number(lastWaitTimes[1].delay_seconds) / 60); 
+            const sentriAverage = Math.round(Number(averageWaitTimes[1].Average_Delay) / 60);
+            const sentriPercentChange = Helper.calculatePercentDifference(sentriDelay, sentriAverage);
+            const readyDelay = Math.round(Number(lastWaitTimes[2].delay_seconds) / 60); 
+            const readyAverage = Math.round(Number(averageWaitTimes[2].Average_Delay) / 60);
+            const readyPercentChange = Helper.calculatePercentDifference(readyDelay, readyAverage);
             /**
              * INDEX 0 = GENERAL LANE
              * INDEX 1 = SENTRI LANE
              * INDEX 2 = READY LANE
              */
-            this.storageID = `${Helper.getCurrentDate().toISO()}`
+            this.storageID = `${Helper.getCurrentDate().toISO()}`;
+            console.log(returnString);
             return {
                 lastUpdateTime: returnString,
                 waitTimes: {
-                    generalLane: Math.round(Number(data[0].delay_seconds / 60)),
-                    sentriLane: Math.round(Number(data[1].delay_seconds / 60)),
-                    readyLane: Math.round(Number(data[2].delay_seconds / 60))
+                    generalLane: {
+                        delay : generalDelay,
+                        average : generalAverage,
+                        percentChange : generalPercentChange,
+                },
+                sentriLane : {
+                    delay : sentriDelay,
+                    average : sentriAverage,
+                    percentChange : sentriPercentChange,
+                },
+                readyLane : {
+                    delay : readyDelay,
+                    average : readyAverage,
+                    percentChange : readyPercentChange,
                 }
             }
-        } catch (error) {
-            return {
-                lastUpdateTime: `Error`,
-                waitTimes: {
-                    generalLane: 0,
-                    sentriLane: 0,
-                    readyLane: 0,
-                }
+        };
+    }
+    catch (error) {
+        console.log(error);
+        return {
+            lastUpdateTime: `Error`,
+            waitTimes: {
+                generalLane: {
+                    delay : 0,
+                    average : 0,
+                    percentChange : 0,
+            },
+            sentriLane : {
+                delay : 0,
+                average : 0,
+                percentChange : 0,
+            },
+            readyLane : {
+                delay : 0,
+                average : 0,
+                percentChange : 0,
             }
         }
+        }
     }
+};
     toAPM(date: DateTime) {
         let hours = Number(date.hour)
         const minutes = Number(date.minute)
