@@ -21,7 +21,7 @@ export default class waitTimes {
             };
 
             const lastWaitTimes: { daterecorded: string, delay_seconds: number, lane_type: number }[] = await (await (await fetch(lastWaitTimeURI)).json());
-            const averageWaitTimes : {Average_Delay : string, Day_of_Week : number,  lane_type : number}[] = await (await (await fetch(averageWaitTimeURI)).json());
+            const averageWaitTimes : {avg : string, lane_type : number}[] = await (await (await fetch(averageWaitTimeURI)).json());
             const newDate = DateTime.fromISO(`${lastWaitTimes[0].daterecorded}`, { zone: 'America/Los_Angeles' });
             let returnString = ``;
             if (Helper.getCurrentDate().day == newDate.day) {
@@ -35,14 +35,28 @@ export default class waitTimes {
             };
             console.log(returnString);
             // let's have some variable spam
-            const generalDelay = Math.round(Number(lastWaitTimes[0].delay_seconds) / 60); 
-            const generalAverage = Math.round(Number(averageWaitTimes[0].Average_Delay) / 60);
+            let generalDelay = 0;
+            let generalAverage = 0;
+            let sentriDelay = 0;
+            let sentriAverage = 0;
+            let readyDelay = 0;
+            let readyAverage = 0;
+            lastWaitTimes.forEach(element => {
+                if (element.lane_type == 1) {       
+                    sentriDelay = Math.round(Number(element.delay_seconds) / 60);
+                    sentriAverage =  Math.round(Number(averageWaitTimes[1].avg) / 60);
+                }
+                if (element.lane_type == 2) {
+                     readyDelay = Math.round(Number(element.delay_seconds) / 60); 
+                     readyAverage = Math.round(Number(averageWaitTimes[2].avg) / 60);
+                }
+                if (element.lane_type == 0) {
+                    generalDelay = Math.round(Number(element.delay_seconds) / 60); 
+                    generalAverage = Math.round(Number(averageWaitTimes[0].avg) / 60);
+                }
+            });
             const generalPercentChange = Helper.calculatePercentDifference(generalDelay, generalAverage);
-            const sentriDelay = Math.round(Number(lastWaitTimes[1].delay_seconds) / 60); 
-            const sentriAverage = Math.round(Number(averageWaitTimes[1].Average_Delay) / 60);
             const sentriPercentChange = Helper.calculatePercentDifference(sentriDelay, sentriAverage);
-            const readyDelay = Math.round(Number(lastWaitTimes[2].delay_seconds) / 60); 
-            const readyAverage = Math.round(Number(averageWaitTimes[2].Average_Delay) / 60);
             const readyPercentChange = Helper.calculatePercentDifference(readyDelay, readyAverage);
             /**
              * INDEX 0 = GENERAL LANE
@@ -50,7 +64,7 @@ export default class waitTimes {
              * INDEX 2 = READY LANE
              */
             this.storageID = `${Helper.getCurrentDate().toISO()}`;
-            console.log(returnString);
+            console.log(sentriDelay);
             return {
                 lastUpdateTime: returnString,
                 waitTimes: {

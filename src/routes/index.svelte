@@ -95,6 +95,7 @@
 		},
 	};
 	$: waitTimesObj;
+	$: console.log(waitTimesObj);
 	/**
 	 * We want to do everything once the dom has loaded
 	 */
@@ -238,6 +239,7 @@
 				currentCount: currentCount,
 				percentChange: percentChange
 			};
+			console.log(objectToBeReturned);
 		}
 		btsObject = objectToBeReturned;
 		// console.log(btsObject);
@@ -301,7 +303,7 @@
 	async function setLastUpdate(port = 250401) {
 		let waitTimeClass = new waitTimes(port);
 		waitTimesObj = await waitTimeClass.getCurrentWaitTimes();
-		console.log(waitTimesObj.lastUpdateTime)
+		console.log(waitTimesObj)
 	}
 	/*************************** FETCHING POSTGRES DATA ****************************/
 	async function fetchData() {
