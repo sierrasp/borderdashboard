@@ -56,13 +56,18 @@
 	const PORTS = [
 		{ value: 250401, label: 'San Ysidro' },
 		{ value: 250601, label: 'Otay Mesa' },
-		{ value: 250301, label: 'Calexico East' },
+		{ value: 250301, label: 'Calexico East' }
 	];
 	const PASSENGERS = ['Personal Vehicle Passengers', 'Train Passengers', 'Bus Passengers'];
 	const VEHICLES = ['Personal Vehicles', 'Buses', 'Trains'];
 	const PEDESTRIANS = ['Pedestrians'];
 	const TRUCKS = ['Trucks'];
-	const mergedArray = { Pedestrians: PEDESTRIANS, Vehicles: VEHICLES, Passengers: PASSENGERS, Trucks : TRUCKS };
+	const mergedArray = {
+		Pedestrians: PEDESTRIANS,
+		Vehicles: VEHICLES,
+		Passengers: PASSENGERS,
+		Trucks: TRUCKS
+	};
 
 	/** I'm going to use the constants given above to create a default for the btsObject so the program doesn't throw an error on load*/
 
@@ -75,24 +80,24 @@
 	}
 	$: btsObject;
 	let waitTimesObj = {
-		lastUpdateTime: "",
+		lastUpdateTime: '',
 		waitTimes: {
 			generalLane: {
 				delay: 0,
 				average: 0,
-				percentChange: 0,
+				percentChange: 0
 			},
 			sentriLane: {
 				delay: 0,
 				average: 0,
-				percentChange: 0,
+				percentChange: 0
 			},
 			readyLane: {
 				delay: 0,
 				average: 0,
-				percentChange: 0,
-			},
-		},
+				percentChange: 0
+			}
+		}
 	};
 	$: waitTimesObj;
 	$: console.log(waitTimesObj);
@@ -134,6 +139,7 @@
 		if (pageLoaded) {
 			setLastUpdate(selectedPortNumber);
 			getBtsGroup(mergedArray);
+			// console.log("EHHHELELELIOISHFJLHASDJLHSDJHL");
 		}
 	}
 
@@ -303,7 +309,7 @@
 	async function setLastUpdate(port = 250401) {
 		let waitTimeClass = new waitTimes(port);
 		waitTimesObj = await waitTimeClass.getCurrentWaitTimes();
-		console.log(waitTimesObj)
+		// console.log(waitTimesObj);
 	}
 	/*************************** FETCHING POSTGRES DATA ****************************/
 	async function fetchData() {
@@ -528,12 +534,96 @@
 		</div>
 		<!-- Wait Times -->
 		<div class="col-lg-4" style="">
-			<div class="card" style="height: 75vh;">
+			<div class="card">
 				<div class="card-header text-center bg-purple ">
 					<h1 class="text-white">Current Wait Times</h1>
+					<i class="fa-solid fa-circle-info fa-xl" id="waitTimesAbout" style="color: white" />
+					<Tooltip target={'waitTimesAbout'} placement="right"
+						>The percent of the right signifies the average recorded wait time of all accumulated {CurrentDate.weekdayLong}'s
+						at {CurrentDate.toFormat('hh:mm a')}</Tooltip
+					>
 				</div>
-				<div class="card-body">
-					<h5 class="card-title" style="border: 1px solid black">Last Updated: {waitTimesObj.lastUpdateTime}</h5>
+				<div class="card my-2">
+					<div class="card-body">
+						<h5 class="card-title">Last Updated: {waitTimesObj.lastUpdateTime}</h5>
+
+						<!-- <p class="card-text">With supporting text below as a natural lead-in to additional content.</p> -->
+						<!-- <a href="#" class="btn btn-primary">Go somewhere</a> -->
+					</div>
+				</div>
+				<div class="card my-2">
+					<div class="card-body">
+						<h3 class="card-title">{waitTimesObj.waitTimes.generalLane.delay} minutes</h3>
+						<h5 class="text-end">
+							{#if waitTimesObj.waitTimes.generalLane.percentChange < 0}
+								<i
+									class="fa fa-arrow-down float-right fa-xl "
+									style="color: red;"
+									aria-hidden="true"
+								/>
+								{waitTimesObj.waitTimes.generalLane.percentChange}%
+							{:else}
+								<i
+									class="fa fa-arrow-up float-right fa-xl "
+									style="color: green;"
+									aria-hidden="true"
+								/>
+								{waitTimesObj.waitTimes.generalLane.percentChange}%
+							{/if}
+						</h5>
+						<p class="card-text">{selectedPortName} All Traffic Lane</p>
+					</div>
+				</div>
+				<div class="card my-2">
+					<div class="card-body">
+						<h3 class="card-title">{waitTimesObj.waitTimes.sentriLane.delay} minutes</h3>
+						<h5 class="text-end">
+							{#if waitTimesObj.waitTimes.sentriLane.percentChange < 0}
+							<i
+								class="fa fa-arrow-down float-right fa-xl "
+								style="color: red;"
+								aria-hidden="true"
+							/>
+							{waitTimesObj.waitTimes.sentriLane.percentChange}%
+						{:else}
+							<i
+								class="fa fa-arrow-up float-right fa-xl "
+								style="color: green;"
+								aria-hidden="true"
+							/>
+							{waitTimesObj.waitTimes.sentriLane.percentChange}%
+						{/if}
+						</h5>
+						<p class="card-text">{selectedPortName} Sentri Lane</p>
+					</div>
+				</div>
+				<div class="card my-2">
+					<div class="card-body">
+						<h3 class="card-title">{waitTimesObj.waitTimes.readyLane.delay} minutes</h3>
+						<h5 class="text-end">
+							{#if waitTimesObj.waitTimes.readyLane.percentChange < 0}
+							<i
+								class="fa fa-arrow-down float-right fa-xl "
+								style="color: red;"
+								aria-hidden="true"
+							/>
+							{waitTimesObj.waitTimes.readyLane.percentChange}%
+						{:else}
+							<i
+								class="fa fa-arrow-up float-right fa-xl "
+								style="color: green;"
+								aria-hidden="true"
+							/>
+							{waitTimesObj.waitTimes.readyLane.percentChange}%
+						{/if}
+						</h5>
+						<p class="card-text">{selectedPortName} Ready Lane</p>
+					</div>
+				</div>
+				<!-- <div class="card-body">
+					<h5 class="card-title" style="border: 1px solid black">
+						Last Updated: {waitTimesObj.lastUpdateTime}
+					</h5>
 					<div class="container-fluid">
 						<div class="row align-items-center">
 							<div class="d-flex flex-column bd-highlight mb-3">
@@ -541,7 +631,9 @@
 								<div class="d-flex flex-row bd-highlight mb-3 align-items-center">
 									<div class="p-2 bd-highlight">
 										<h1>{waitTimesObj.waitTimes.generalLane.delay} minutes</h1>
-										A {waitTimesObj.waitTimes.generalLane.percentChange}% percent change from an average of {waitTimesObj.waitTimes.generalLane.average} minutes over 2022 Apr 1 to {CurrentDate.toFormat('yyyy LLL dd')}
+										A {waitTimesObj.waitTimes.generalLane.percentChange}% percent change from an
+										average of {waitTimesObj.waitTimes.generalLane.average} minutes over 2022 Apr 1 to
+										{CurrentDate.toFormat('yyyy LLL dd')}
 									</div>
 									<div class="p-2 bd-highlight">
 										<i
@@ -550,21 +642,18 @@
 											aria-hidden="true"
 										/> 10%
 									</div>
-									<div class="px-0 bd-highlight">
-										<i class="fa-solid fa-circle-info" id="tooltip-one" />
-										<Tooltip target="tooltip-one" placement="right">
-											<strong>Hello</strong> <i>World</i>!
-										</Tooltip>
-									</div>
+									<div class="px-0 bd-highlight" />
 								</div>
 							</div>
 							<div class="d-flex flex-column bd-highlight mb-3">
 								<div class="p-2 bd-highlight">{selectedPortName} Sentri Lane</div>
-								<!-- <div class="p-2 bd-highlight">Flex item 2</div> -->
+								 <div class="p-2 bd-highlight">Flex item 2</div> 
 								<div class="d-flex flex-row bd-highlight mb-3 align-items-center">
 									<div class="p-2 bd-highlight">
 										<h1>{waitTimesObj.waitTimes.sentriLane.delay} minutes</h1>
-										A {waitTimesObj.waitTimes.sentriLane.percentChange}% percent change from an average of {waitTimesObj.waitTimes.sentriLane.average} minutes over 2022 Apr 1 to {CurrentDate.toFormat('yyyy LLL dd')}
+										A {waitTimesObj.waitTimes.sentriLane.percentChange}% percent change from an
+										average of {waitTimesObj.waitTimes.sentriLane.average} minutes over 2022 Apr 1 to
+										{CurrentDate.toFormat('yyyy LLL dd')}
 									</div>
 									<div class="p-2 bd-highlight">
 										<i
@@ -573,16 +662,17 @@
 											aria-hidden="true"
 										/> 10%
 									</div>
-									<!-- <div class="p-2 bd-highlight">Flex item 3</div> -->
+									
 								</div>
 							</div>
 							<div class="d-flex flex-column bd-highlight mb-3">
 								<div class="p-2 bd-highlight">{selectedPortName} Ready Lane</div>
-								<!-- <div class="p-2 bd-highlight">Flex item 2</div> -->
 								<div class="d-flex flex-row bd-highlight mb-3 align-items-center">
 									<div class="p-2 bd-highlight">
 										<h1>{waitTimesObj.waitTimes.readyLane.delay} minutes</h1>
-										A {waitTimesObj.waitTimes.sentriLane.percentChange}% percent change from an average of {waitTimesObj.waitTimes.sentriLane.average} minutes over 2022 Apr 1 to {CurrentDate.toFormat('yyyy LLL dd')}
+										A {waitTimesObj.waitTimes.sentriLane.percentChange}% percent change from an
+										average of {waitTimesObj.waitTimes.sentriLane.average} minutes over 2022 Apr 1 to
+										{CurrentDate.toFormat('yyyy LLL dd')}
 									</div>
 									<div class="p-2 bd-highlight">
 										<i
@@ -591,15 +681,12 @@
 											aria-hidden="true"
 										/> 10%
 									</div>
-									<!-- <div class="p-2 bd-highlight">Flex item 3</div> -->
 								</div>
 							</div>
 						</div>
 					</div>
 
-					<!-- svelte-ignore a11y-invalid-attribute -->
-					<!-- <a href="" class="btn btn-primary">Go somewhere</a> -->
-				</div>
+				</div> -->
 				<div class="card-footer text-muted">https://bwt.cbp.gov/details</div>
 			</div>
 		</div>

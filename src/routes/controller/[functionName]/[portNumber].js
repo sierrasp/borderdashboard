@@ -7,6 +7,7 @@ export async function get({params}) {
 let portNumber = Number(params.portNumber);
   if (params.functionName == "getLastWaitTimes") {
     let rows = await dbHelper.mostRecentByPort(portNumber);
+    console.log(rows);
     return  {
         body: rows
     }

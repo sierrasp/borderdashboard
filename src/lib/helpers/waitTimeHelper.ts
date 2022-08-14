@@ -19,9 +19,10 @@ export default class waitTimes {
                 lastWaitTimeURI = `http://localhost:3000/controller/getLastWaitTimes/${this.portNum}`;
                 averageWaitTimeURI = `http://localhost:3000/controller/getAverageWaitTimes/${this.portNum}`;
             };
-
-            const lastWaitTimes: { daterecorded: string, delay_seconds: number, lane_type: number }[] = await (await (await fetch(lastWaitTimeURI)).json());
+            console.log(lastWaitTimeURI);
+            const lastWaitTimes = await this.getMostRecentDates(lastWaitTimeURI);
             const averageWaitTimes : {avg : string, lane_type : number}[] = await (await (await fetch(averageWaitTimeURI)).json());
+            console.log(averageWaitTimes);
             const newDate = DateTime.fromISO(`${lastWaitTimes[0].daterecorded}`, { zone: 'America/Los_Angeles' });
             let returnString = ``;
             if (Helper.getCurrentDate().day == newDate.day) {
@@ -123,6 +124,65 @@ export default class waitTimes {
 
         return strTime
     };
+    async getMostRecentDates(URI : string) {
+        console.log(URI);
+        let arrayFinalObjects: {lane_type: number, daterecorded: string, delay_seconds : number}[] = [];
+        const rows : {lane_type: number, daterecorded: string, delay_seconds : number}[] = await (await (await fetch(URI)).json());
+        console.log(rows);
+        let generalLaneArr: {lane_type: number, daterecorded: string, delay_seconds : number}[] = [];
+        let sentriLaneArr: {lane_type: number, daterecorded: string, delay_seconds : number}[] = [];
+        let readyLaneArr : {lane_type: number, daterecorded: string, delay_seconds : number}[]= [];
+        rows.forEach(x => {
+            if (x.lane_type == 0) { 
+                generalLaneArr =[...generalLaneArr, x]; 
+            }
+            if (x.lane_type == 1) { 
+                sentriLaneArr =[...sentriLaneArr, x]; 
+            }
+            if (x.lane_type == 2) { 
+                readyLaneArr =[...readyLaneArr, x]; 
+            }
+        });
+
+        // console.log(rows);
+        // let arrayFinalObjects : {lane_type: number, daterecorded: string, delay_seconds : number}[] = [];
+        // const generalLane = rows.filter(el => {
+        //     return el.lane_type = 0;
+        // });
+        // console.log(generalLane);
+        // const sentriLane = rows.filter(el => {
+        //     return el.lane_type = 1;
+        // });
+        // const readyLane = rows.filter(el => {
+        //     return el.lane_type = 2;
+        // });
+        const latestGeneralDate = generalLaneArr.reduce((a, b) => {
+            return new Date(a.daterecorded) > new Date(b.daterecorded) ? a : b;
+          });
+          arrayFinalObjects = [...arrayFinalObjects,latestGeneralDate];
+          const latestSentriDate = sentriLaneArr.reduce((a, b) => {
+            return new Date(a.daterecorded) > new Date(b.daterecorded) ? a : b;
+          });
+          arrayFinalObjects = [...arrayFinalObjects,latestSentriDate];
+          const latestReadyDate = readyLaneArr.reduce((a, b) => {
+            return new Date(a.daterecorded) > new Date(b.daterecorded) ? a : b;
+          });
+          arrayFinalObjects = [...arrayFinalObjects,latestReadyDate];
+        return arrayFinalObjects;
+    };
+    max_date(all_dates : {lane_type: number, daterecorded: string, delay_seconds : number}[]) {
+        let max_dt = all_dates[0].daterecorded;
+          let max_dtObj = new Date(max_dt);
+        all_dates.forEach(function(dt, index)
+          {
+          if ( new Date( dt ) > max_dtObj)
+          {
+          max_dt = dt;
+          max_dtObj = new Date(dt);
+          }
+          });
+         return max_dt;
+          }
     // For now, these are useless
     store(data: any) {
         const valueStringified = JSON.stringify(data);
