@@ -7,9 +7,15 @@ export default class waitTimes {
     storageID = "";
     constructor(portNum: number) {
         this.portNum = portNum;
-    }
+    };
     async getCurrentWaitTimes() {
-        // let storageID = 
+
+        /**
+         * I need to identify which ports are closed
+         */
+         const laneClosedReg = /((Ready|Sentri|General) Lanes: {2}Lanes Closed)/gm
+         const openLanesRegex = /(General|Ready|Sentri).(.*?)delay/gm;
+   
         try {
             let lastWaitTimeURI = ``;
             let averageWaitTimeURI = ``;
@@ -22,7 +28,9 @@ export default class waitTimes {
             console.log(lastWaitTimeURI);
             const lastWaitTimes = await this.getMostRecentDates(lastWaitTimeURI);
             const averageWaitTimes : {avg : string, lane_type : number}[] = await (await (await fetch(averageWaitTimeURI)).json());
-            console.log(averageWaitTimes);
+            const averageWaitTimesFiltered = this.checkPortClosed(averageWaitTimes);
+            console.log(averageWaitTimesFiltered, "HELLOO??");
+            // console.log(averageWaitTimes);
             const newDate = DateTime.fromISO(`${lastWaitTimes[0].daterecorded}`, { zone: 'America/Los_Angeles' });
             let returnString = ``;
             if (Helper.getCurrentDate().day == newDate.day) {
@@ -111,6 +119,20 @@ export default class waitTimes {
         }
     }
 };
+checkPortClosed(averageWaitTimes : {avg : string, lane_type : number}[]) {
+    let missing: {avg : string, lane_type : number}[] = [];
+    for (let i = 0; i < 3; i++) {
+        if (averageWaitTimes[i].lane_type != i) {
+            missing = [...missing, averageWaitTimes[i]];
+        };
+    } ;   
+    console.log("HELELEOEOEOEOE?????")
+    return {
+        averageWaitTimes : averageWaitTimes, 
+        missing : missing
+    }     
+};
+
     toAPM(date: DateTime) {
         let hours = Number(date.hour)
         const minutes = Number(date.minute)
@@ -143,7 +165,7 @@ export default class waitTimes {
                 readyLaneArr =[...readyLaneArr, x]; 
             }
         });
-
+        
         // console.log(rows);
         // let arrayFinalObjects : {lane_type: number, daterecorded: string, delay_seconds : number}[] = [];
         // const generalLane = rows.filter(el => {
@@ -170,19 +192,7 @@ export default class waitTimes {
           arrayFinalObjects = [...arrayFinalObjects,latestReadyDate];
         return arrayFinalObjects;
     };
-    max_date(all_dates : {lane_type: number, daterecorded: string, delay_seconds : number}[]) {
-        let max_dt = all_dates[0].daterecorded;
-          let max_dtObj = new Date(max_dt);
-        all_dates.forEach(function(dt, index)
-          {
-          if ( new Date( dt ) > max_dtObj)
-          {
-          max_dt = dt;
-          max_dtObj = new Date(dt);
-          }
-          });
-         return max_dt;
-          }
+
     // For now, these are useless
     store(data: any) {
         const valueStringified = JSON.stringify(data);
