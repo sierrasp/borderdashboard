@@ -79,25 +79,14 @@
 		};
 	}
 	$: btsObject;
-	let waitTimesObj = {
-		lastUpdateTime: '',
-		waitTimes: {
-			generalLane: {
-				delay: 0,
-				average: 0,
-				percentChange: 0
-			},
-			sentriLane: {
-				delay: 0,
-				average: 0,
-				percentChange: 0
-			},
-			readyLane: {
-				delay: 0,
-				average: 0,
-				percentChange: 0
-			}
-		}
+	let waitTimesObj : { lastUpdateTime: string, found: { laneName : string, delay: number, average: number, percentChange: number }[], missing: { laneName : string, reason : string }[] } = {
+		lastUpdateTime : "",
+		found : [
+			{laneName : "General", average : 0, delay : 0, percentChange : 0},
+			{laneName : "Sentri", average : 0, delay : 0, percentChange : 0},
+			{laneName : "Ready", average : 0, delay : 0, percentChange : 0}
+		],
+		missing : []
 	};
 	$: waitTimesObj;
 	$: console.log(waitTimesObj);
@@ -308,8 +297,8 @@
 	 */
 	async function setLastUpdate(port = 250401) {
 		let waitTimeClass = new waitTimes(port);
-		waitTimesObj = await waitTimeClass.getCurrentWaitTimes();
-		// console.log(waitTimesObj);
+		let {returnObj} = await waitTimeClass.getCurrentWaitTimes();
+		waitTimesObj = returnObj;
 	}
 	/*************************** FETCHING POSTGRES DATA ****************************/
 	async function fetchData() {
@@ -551,75 +540,40 @@
 						<!-- <a href="#" class="btn btn-primary">Go somewhere</a> -->
 					</div>
 				</div>
+				{#each waitTimesObj.found as laneFound}
 				<div class="card my-2">
 					<div class="card-body">
-						<h3 class="card-title">{waitTimesObj.waitTimes.generalLane.delay} minutes</h3>
+						<h3 class="card-title">{laneFound.delay} minutes</h3>
 						<h5 class="text-end">
-							{#if waitTimesObj.waitTimes.generalLane.percentChange < 0}
+							{#if laneFound.percentChange < 0}
 								<i
 									class="fa fa-arrow-down float-right fa-xl "
 									style="color: red;"
 									aria-hidden="true"
 								/>
-								{waitTimesObj.waitTimes.generalLane.percentChange}%
+								{laneFound.percentChange}%
 							{:else}
 								<i
 									class="fa fa-arrow-up float-right fa-xl "
 									style="color: green;"
 									aria-hidden="true"
 								/>
-								{waitTimesObj.waitTimes.generalLane.percentChange}%
+								{laneFound.percentChange}%
 							{/if}
 						</h5>
-						<p class="card-text">{selectedPortName} All Traffic Lane</p>
+						<p class="card-text">{selectedPortName} {laneFound.laneName} Traffic Lane</p>
 					</div>
 				</div>
+				{/each}
+				{#each waitTimesObj.missing as laneMissing}
 				<div class="card my-2">
 					<div class="card-body">
-						<h3 class="card-title">{waitTimesObj.waitTimes.sentriLane.delay} minutes</h3>
-						<h5 class="text-end">
-							{#if waitTimesObj.waitTimes.sentriLane.percentChange < 0}
-							<i
-								class="fa fa-arrow-down float-right fa-xl "
-								style="color: red;"
-								aria-hidden="true"
-							/>
-							{waitTimesObj.waitTimes.sentriLane.percentChange}%
-						{:else}
-							<i
-								class="fa fa-arrow-up float-right fa-xl "
-								style="color: green;"
-								aria-hidden="true"
-							/>
-							{waitTimesObj.waitTimes.sentriLane.percentChange}%
-						{/if}
-						</h5>
-						<p class="card-text">{selectedPortName} Sentri Lane</p>
+						<h3 class="card-title">Lane Closed</h3>
+						<p class="card-text">{selectedPortName} {laneMissing.laneName} Traffic Lane</p>
 					</div>
 				</div>
-				<div class="card my-2">
-					<div class="card-body">
-						<h3 class="card-title">{waitTimesObj.waitTimes.readyLane.delay} minutes</h3>
-						<h5 class="text-end">
-							{#if waitTimesObj.waitTimes.readyLane.percentChange < 0}
-							<i
-								class="fa fa-arrow-down float-right fa-xl "
-								style="color: red;"
-								aria-hidden="true"
-							/>
-							{waitTimesObj.waitTimes.readyLane.percentChange}%
-						{:else}
-							<i
-								class="fa fa-arrow-up float-right fa-xl "
-								style="color: green;"
-								aria-hidden="true"
-							/>
-							{waitTimesObj.waitTimes.readyLane.percentChange}%
-						{/if}
-						</h5>
-						<p class="card-text">{selectedPortName} Ready Lane</p>
-					</div>
-				</div>
+				{/each}
+
 				<!-- <div class="card-body">
 					<h5 class="card-title" style="border: 1px solid black">
 						Last Updated: {waitTimesObj.lastUpdateTime}

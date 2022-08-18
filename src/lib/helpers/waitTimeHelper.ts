@@ -13,9 +13,18 @@ export default class waitTimes {
         /**
          * I need to identify which ports are closed
          */
-         const laneClosedReg = /((Ready|Sentri|General) Lanes: {2}Lanes Closed)/gm
-         const openLanesRegex = /(General|Ready|Sentri).(.*?)delay/gm;
-   
+        //  const laneClosedReg = /((Ready|Sentri|General) Lanes: {2}Lanes Closed)/gm
+        //  const openLanesRegex = /(General|Ready|Sentri).(.*?)delay/gm;
+
+        // delay : delay,
+        // average : average,
+        // percentChange : percentDiff,
+        let returnObj: { lastUpdateTime: string, found: { laneName : string, delay: number, average: number, percentChange: number }[], missing: { laneName : string, reason : string }[] } = {
+            lastUpdateTime: "",
+            found: [],
+            missing: [],
+        };
+
         try {
             let lastWaitTimeURI = ``;
             let averageWaitTimeURI = ``;
@@ -27,9 +36,10 @@ export default class waitTimes {
             };
             console.log(lastWaitTimeURI);
             const lastWaitTimes = await this.getMostRecentDates(lastWaitTimeURI);
-            const averageWaitTimes : {avg : string, lane_type : number}[] = await (await (await fetch(averageWaitTimeURI)).json());
-            const averageWaitTimesFiltered = this.checkPortClosed(averageWaitTimes);
-            console.log(averageWaitTimesFiltered, "HELLOO??");
+            console.log(lastWaitTimes);
+            const averageWaitTimes: { found: { avg: string, lane_type: number }[], missing: number[] } = await (await (await fetch(averageWaitTimeURI)).json());
+
+            // console.log(averageWaitTimesFiltered, "HELLOO??");
             // console.log(averageWaitTimes);
             const newDate = DateTime.fromISO(`${lastWaitTimes[0].daterecorded}`, { zone: 'America/Los_Angeles' });
             let returnString = ``;
@@ -43,95 +53,137 @@ export default class waitTimes {
                 returnString = `${newDate.toSQLDate()}`;
             };
             console.log(returnString);
-            // let's have some variable spam
-            let generalDelay = 0;
-            let generalAverage = 0;
-            let sentriDelay = 0;
-            let sentriAverage = 0;
-            let readyDelay = 0;
-            let readyAverage = 0;
-            lastWaitTimes.forEach(element => {
-                if (element.lane_type == 1) {       
-                    sentriDelay = Math.round(Number(element.delay_seconds) / 60);
-                    sentriAverage =  Math.round(Number(averageWaitTimes[1].avg) / 60);
-                }
-                if (element.lane_type == 2) {
-                     readyDelay = Math.round(Number(element.delay_seconds) / 60); 
-                     readyAverage = Math.round(Number(averageWaitTimes[2].avg) / 60);
+
+            averageWaitTimes.found.forEach((element) => {
+                let average = 0;
+                let delay = 0; 
+                let percentDiff = 0; 
+                if (Number(element.avg) != 0) {
+                    average = Math.round(Number(element.avg) / 60);
+                     delay = Math.round(Number(lastWaitTimes[element.lane_type].delay_seconds) / 60);
+                     percentDiff = Helper.calculatePercentDifference(delay, average);
                 }
                 if (element.lane_type == 0) {
-                    generalDelay = Math.round(Number(element.delay_seconds) / 60); 
-                    generalAverage = Math.round(Number(averageWaitTimes[0].avg) / 60);
+                    returnObj.found.push({
+                        laneName : "General",
+                        delay: delay,
+                        average: average,
+                        percentChange: percentDiff,
+                    });
+                }
+                if (element.lane_type == 1) {
+                    returnObj.found.push({
+                        laneName : "Sentri",
+                        delay: delay,
+                        average: average,
+                        percentChange: percentDiff,
+                    });
+                }
+                if (element.lane_type == 2) {
+                    returnObj.found.push({
+                        laneName : "Ready",
+                        delay: delay,
+                        average: average,
+                        percentChange: percentDiff,
+                    });
                 }
             });
-            const generalPercentChange = Helper.calculatePercentDifference(generalDelay, generalAverage);
-            const sentriPercentChange = Helper.calculatePercentDifference(sentriDelay, sentriAverage);
-            const readyPercentChange = Helper.calculatePercentDifference(readyDelay, readyAverage);
+            console.log(averageWaitTimes);
+            averageWaitTimes.missing.forEach((element) => {
+                if (element == 0) {
+                    returnObj.missing.push({
+                        laneName : "General",
+                        reason : "Lane Closed"
+                    });
+                }
+                if (element == 1) {
+                    returnObj.missing.push({
+                        laneName : "Sentri",
+                        reason : "Lane Closed"
+                    });
+                }
+                if (element == 2) {
+                    returnObj.missing.push({
+                        laneName : "Ready",
+                        reason : "Lane Closed"
+                    });
+                }
+            });
+            returnObj["lastUpdateTime"] = returnString;
+            console.log(returnObj);
+            // let's have some variable spam
+            // let generalDelay : number  | string
+            // let generalAverage = 0;
+            // let sentriDelay = 0;
+            // let sentriAverage = 0;
+            // let readyDelay = 0;
+            // let readyAverage = 0;
+            // lastWaitTimes.forEach(element => {
+            //     if (element.lane_type == 1) {       
+            //         sentriDelay = Math.round(Number(element.delay_seconds) / 60);
+            //         sentriAverage =  Math.round(Number(averageWaitTimes[1].avg) / 60);
+            //     }
+            //     if (element.lane_type == 2) {
+            //          readyDelay = Math.round(Number(element.delay_seconds) / 60); 
+            //          readyAverage = Math.round(Number(averageWaitTimes[2].avg) / 60);
+            //     }
+            //     if (element.lane_type == 0) {
+            //         generalDelay = Math.round(Number(element.delay_seconds) / 60); 
+            //         generalAverage = Math.round(Number(averageWaitTimes[0].avg) / 60);
+            //     }
+            // });
+            // const generalPercentChange = Helper.calculatePercentDifference(generalDelay, generalAverage);
+            // const sentriPercentChange = Helper.calculatePercentDifference(sentriDelay, sentriAverage);
+            // const readyPercentChange = Helper.calculatePercentDifference(readyDelay, readyAverage);
             /**
              * INDEX 0 = GENERAL LANE
              * INDEX 1 = SENTRI LANE
              * INDEX 2 = READY LANE
              */
             this.storageID = `${Helper.getCurrentDate().toISO()}`;
-            console.log(sentriDelay);
+            await console.log(returnObj);
             return {
-                lastUpdateTime: returnString,
-                waitTimes: {
-                    generalLane: {
-                        delay : generalDelay,
-                        average : generalAverage,
-                        percentChange : generalPercentChange,
-                },
-                sentriLane : {
-                    delay : sentriDelay,
-                    average : sentriAverage,
-                    percentChange : sentriPercentChange,
-                },
-                readyLane : {
-                    delay : readyDelay,
-                    average : readyAverage,
-                    percentChange : readyPercentChange,
+                returnObj
+            };
+        }
+        catch (error) {
+            console.log(error);
+            return {
+                lastUpdateTime: `Error`,
+                found: {
+                    General: {
+                        delay: 0,
+                        average: 0,
+                        percentChange: 0,
+                    },
+                    Sentri: {
+                        delay: 0,
+                        average: 0,
+                        percentChange: 0,
+                    },
+                    Ready: {
+                        delay: 0,
+                        average: 0,
+                        percentChange: 0,
+                    }
                 }
             }
-        };
-    }
-    catch (error) {
-        console.log(error);
-        return {
-            lastUpdateTime: `Error`,
-            waitTimes: {
-                generalLane: {
-                    delay : 0,
-                    average : 0,
-                    percentChange : 0,
-            },
-            sentriLane : {
-                delay : 0,
-                average : 0,
-                percentChange : 0,
-            },
-            readyLane : {
-                delay : 0,
-                average : 0,
-                percentChange : 0,
-            }
         }
-        }
-    }
-};
-checkPortClosed(averageWaitTimes : {avg : string, lane_type : number}[]) {
-    let missing: {avg : string, lane_type : number}[] = [];
-    for (let i = 0; i < 3; i++) {
-        if (averageWaitTimes[i].lane_type != i) {
-            missing = [...missing, averageWaitTimes[i]];
-        };
-    } ;   
-    console.log("HELELEOEOEOEOE?????")
-    return {
-        averageWaitTimes : averageWaitTimes, 
-        missing : missing
-    }     
-};
+    };
+    // checkPortClosed(averageWaitTimes : {avg : string, lane_type : number}[]) {
+    //     let missing: {avg : string, lane_type : number}[] = [];
+    //     for (let i = 0; i <= 3; i++) {
+    //         if (averageWaitTimes.indexOf(i) == -1) {
+    //             missing = [...missing, averageWaitTimes[i]];
+    //         };
+    //     } ;   
+
+    //     console.log("HELELEOEOEOEOE?????")
+    //     return {
+    //         averageWaitTimes : averageWaitTimes, 
+    //         missing : missing
+    //     }     
+    // };
 
     toAPM(date: DateTime) {
         let hours = Number(date.hour)
@@ -146,26 +198,26 @@ checkPortClosed(averageWaitTimes : {avg : string, lane_type : number}[]) {
 
         return strTime
     };
-    async getMostRecentDates(URI : string) {
+    async getMostRecentDates(URI: string) {
         console.log(URI);
-        let arrayFinalObjects: {lane_type: number, daterecorded: string, delay_seconds : number}[] = [];
-        const rows : {lane_type: number, daterecorded: string, delay_seconds : number}[] = await (await (await fetch(URI)).json());
+        let arrayFinalObjects: { lane_type: number, daterecorded: string, delay_seconds: number }[] = [];
+        const rows: { lane_type: number, daterecorded: string, delay_seconds: number }[] = await (await (await fetch(URI)).json());
         console.log(rows);
-        let generalLaneArr: {lane_type: number, daterecorded: string, delay_seconds : number}[] = [];
-        let sentriLaneArr: {lane_type: number, daterecorded: string, delay_seconds : number}[] = [];
-        let readyLaneArr : {lane_type: number, daterecorded: string, delay_seconds : number}[]= [];
+        let generalLaneArr: { lane_type: number, daterecorded: string, delay_seconds: number }[] = [];
+        let sentriLaneArr: { lane_type: number, daterecorded: string, delay_seconds: number }[] = [];
+        let readyLaneArr: { lane_type: number, daterecorded: string, delay_seconds: number }[] = [];
         rows.forEach(x => {
-            if (x.lane_type == 0) { 
-                generalLaneArr =[...generalLaneArr, x]; 
+            if (x.lane_type == 0) {
+                generalLaneArr = [...generalLaneArr, x];
             }
-            if (x.lane_type == 1) { 
-                sentriLaneArr =[...sentriLaneArr, x]; 
+            if (x.lane_type == 1) {
+                sentriLaneArr = [...sentriLaneArr, x];
             }
-            if (x.lane_type == 2) { 
-                readyLaneArr =[...readyLaneArr, x]; 
+            if (x.lane_type == 2) {
+                readyLaneArr = [...readyLaneArr, x];
             }
         });
-        
+
         // console.log(rows);
         // let arrayFinalObjects : {lane_type: number, daterecorded: string, delay_seconds : number}[] = [];
         // const generalLane = rows.filter(el => {
@@ -180,16 +232,16 @@ checkPortClosed(averageWaitTimes : {avg : string, lane_type : number}[]) {
         // });
         const latestGeneralDate = generalLaneArr.reduce((a, b) => {
             return new Date(a.daterecorded) > new Date(b.daterecorded) ? a : b;
-          });
-          arrayFinalObjects = [...arrayFinalObjects,latestGeneralDate];
-          const latestSentriDate = sentriLaneArr.reduce((a, b) => {
+        });
+        arrayFinalObjects = [...arrayFinalObjects, latestGeneralDate];
+        const latestSentriDate = sentriLaneArr.reduce((a, b) => {
             return new Date(a.daterecorded) > new Date(b.daterecorded) ? a : b;
-          });
-          arrayFinalObjects = [...arrayFinalObjects,latestSentriDate];
-          const latestReadyDate = readyLaneArr.reduce((a, b) => {
+        });
+        arrayFinalObjects = [...arrayFinalObjects, latestSentriDate];
+        const latestReadyDate = readyLaneArr.reduce((a, b) => {
             return new Date(a.daterecorded) > new Date(b.daterecorded) ? a : b;
-          });
-          arrayFinalObjects = [...arrayFinalObjects,latestReadyDate];
+        });
+        arrayFinalObjects = [...arrayFinalObjects, latestReadyDate];
         return arrayFinalObjects;
     };
 
