@@ -88,7 +88,15 @@ export class Helper {
     };
     static calculatePercentDifference(newNumber : number, oldNumber : number) {
         return Math.round(((newNumber - oldNumber) / oldNumber) * 100);
-    }
+    };
+    /**
+     * 
+     * @param x Number
+     * @returns Number seperated by commas, Eg. 10000 => 10,000
+     */
+    static numberWithCommas(x : number) {
+        return x.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+    };
     /**
      * 
      * @param port Port needs to represent cbp number of port - Eg. San Ysidro port num = 250401

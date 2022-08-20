@@ -79,14 +79,18 @@
 		};
 	}
 	$: btsObject;
-	let waitTimesObj : { lastUpdateTime: string, found: { laneName : string, delay: number, average: number, percentChange: number }[], missing: { laneName : string, reason : string }[] } = {
-		lastUpdateTime : "",
-		found : [
-			{laneName : "General", average : 0, delay : 0, percentChange : 0},
-			{laneName : "Sentri", average : 0, delay : 0, percentChange : 0},
-			{laneName : "Ready", average : 0, delay : 0, percentChange : 0}
+	let waitTimesObj: {
+		lastUpdateTime: string;
+		found: { laneName: string; delay: number; average: number; percentChange: number }[];
+		missing: { laneName: string; reason: string }[];
+	} = {
+		lastUpdateTime: '',
+		found: [
+			{ laneName: 'General', average: 0, delay: 0, percentChange: 0 },
+			{ laneName: 'Sentri', average: 0, delay: 0, percentChange: 0 },
+			{ laneName: 'Ready', average: 0, delay: 0, percentChange: 0 }
 		],
-		missing : []
+		missing: []
 	};
 	$: waitTimesObj;
 	$: console.log(waitTimesObj);
@@ -99,18 +103,7 @@
 	 */
 	let lastUpdate: string;
 	$: lastUpdate;
-	/**
-	 * General Lane Duration
-	 */
-	let lastUpdateDurationGeneral: number;
-	/**
-	 * General Lane Duration
-	 */
-	let lastUpdateDurationSentri: number;
-	/**
-	 * General Lane Duration
-	 */
-	let lastUpdateDurationReady: number;
+
 	/**
 	 * Selected Port Number - Default : San Ysidro
 	 */
@@ -234,6 +227,12 @@
 				currentCount: currentCount,
 				percentChange: percentChange
 			};
+			if (isNaN(currentCount) || isNaN(percentChange)) {
+				objectToBeReturned[key] = {
+				currentCount: 0,
+				percentChange: 0
+			};
+			}
 			console.log(objectToBeReturned);
 		}
 		btsObject = objectToBeReturned;
@@ -297,7 +296,7 @@
 	 */
 	async function setLastUpdate(port = 250401) {
 		let waitTimeClass = new waitTimes(port);
-		let {returnObj} = await waitTimeClass.getCurrentWaitTimes();
+		let { returnObj } = await waitTimeClass.getCurrentWaitTimes();
 		waitTimesObj = returnObj;
 	}
 	/*************************** FETCHING POSTGRES DATA ****************************/
@@ -355,172 +354,141 @@
 	<div class="row d-flex justify-content-start" style="height: 75vh;">
 		<!-- Crossing of goods-->
 		<div class="col-lg-4" style="">
-			<div class="card" style="height: 75vh;">
-				<div class="card-header text-center bg-green">
+			<div class="card">
+				<div class="card-header text-center bg-green ">
 					<h1 class="text-white">Crossing of People</h1>
+					<i class="fa-solid fa-circle-info fa-xl" id="waitTimesAbout" style="color: white" />
+					<Tooltip target={'waitTimesAbout'} placement="right"
+						>The percent of the right signifies the average recorded wait time of all accumulated {CurrentDate.weekdayLong}'s
+						at {CurrentDate.toFormat('hh:mm a')}</Tooltip
+					>
 				</div>
-				<div class="card-body">
-					<div class="container-fluid">
-						<div class="row align-items-center">
-							<div class="d-flex flex-column bd-highlight mb-3">
-								<div class="p-2 bd-highlight">Vehicles Crossed:</div>
-								<!-- <div class="p-2 bd-ate">Flex item 2</div> -->
-								<div class="d-flex flex-row bd-highlight mb-3 align-items-center">
-									<div class="p-2 bd-highlight">
-										{btsObject.Vehicles.currentCount}
-									</div>
-									<div class="p-2 bd-highlight">
-										<i
-											class="fa fa-arrow-up float-right fa-2xl "
-											style="color: green;"
-											aria-hidden="true"
-										/>
-										{btsObject.Vehicles.percentChange}%
-									</div>
-									<!-- <div class="p-2 bd-highlight">Flex item 3</div> -->
-								</div>
-							</div>
-							<!-- <div class="col">
-								<h3 class="card-title text-bold pt-3 mb-0" />
-								<h5 class="card-title pt-0">Pedestrians</h5>
-							</div> -->
-							<!-- <div class="col d-flex justify-content-end">
+				<div class="card my-2">
+					<div class="card-body">
+						<h5 class="card-title">Dates Selected: {startDate} to {endDate}</h5>
+
+						<!-- <p class="card-text">With supporting text below as a natural lead-in to additional content.</p> -->
+						<!-- <a href="#" class="btn btn-primary">Go somewhere</a> -->
+					</div>
+				</div>
+				<div class="card my-2">
+					<div class="card-body">
+						<h3 class="card-title">{Helper.numberWithCommas(btsObject.Pedestrians.currentCount)} crossings</h3>
+						<h5 class="text-end">
+							{#if btsObject.Pedestrians.percentChange < 0}
 								<i
-									class="fa fa-arrow-up float-right fa-2xl "
+									class="fa fa-arrow-down float-right fa-xl "
+									style="color: red;"
+									aria-hidden="true"
+								/>
+								{btsObject.Pedestrians.percentChange}%
+							{:else}
+								<i
+									class="fa fa-arrow-up float-right fa-xl "
 									style="color: green;"
 									aria-hidden="true"
 								/>
-							</div> -->
-						</div>
-						<div class="d-flex flex-column bd-highlight mb-3">
-							<div class="p-2 bd-highlight">Pedestrians Crossed:</div>
-							<!-- <div class="p-2 bd-highlight">Flex item 2</div> -->
-							<div class="d-flex flex-row bd-highlight mb-3 align-items-center">
-								<div class="p-2 bd-highlight">
-									{btsObject.Pedestrians.currentCount}
-								</div>
-								<div class="p-2 bd-highlight">
-									<i
-										class="fa fa-arrow-up float-right fa-2xl "
-										style="color: green;"
-										aria-hidden="true"
-									/>
-									{btsObject.Pedestrians.percentChange}%
-								</div>
-								<!-- <div class="p-2 bd-highlight">Flex item 3</div> -->
-							</div>
-						</div>
-						<div class="d-flex flex-column bd-highlight mb-3">
-							<div class="p-2 bd-highlight">Passengers</div>
-							<!-- <div class="p-2 bd-highlight">Flex item 2</div> -->
-							<div class="d-flex flex-row bd-highlight mb-3 align-items-center">
-								<div class="p-2 bd-highlight">
-									{btsObject.Passengers.currentCount}
-								</div>
-								<div class="p-2 bd-highlight">
-									<i
-										class="fa fa-arrow-up float-right fa-2xl "
-										style="color: green;"
-										aria-hidden="true"
-									/>
-									{btsObject.Passengers.percentChange}%
-								</div>
-								<!-- <div class="p-2 bd-highlight">Flex item 3</div> -->
-							</div>
-						</div>
+								{btsObject.Pedestrians.percentChange}%
+							{/if}
+						</h5>
+						<p class="card-text">Pedestrian Crossings</p>
 					</div>
-
-					<!-- svelte-ignore a11y-invalid-attribute -->
-					<!-- <a href="" class="btn btn-primary">Go somewhere</a> -->
+				</div>
+				<div class="card my-2">
+					<div class="card-body">
+						<h3 class="card-title">{Helper.numberWithCommas(btsObject.Vehicles.currentCount)} crossings</h3>
+						<h5 class="text-end">
+							{#if btsObject.Vehicles.percentChange < 0}
+								<i
+									class="fa fa-arrow-down float-right fa-xl "
+									style="color: red;"
+									aria-hidden="true"
+								/>
+								{btsObject.Vehicles.percentChange}%
+							{:else}
+								<i
+									class="fa fa-arrow-up float-right fa-xl "
+									style="color: green;"
+									aria-hidden="true"
+								/>
+								{btsObject.Vehicles.percentChange}%
+							{/if}
+						</h5>
+						<p class="card-text">Vehicles Crossings</p>
+					</div>
+				</div>
+				<div class="card my-2">
+					<div class="card-body">
+						<h3 class="card-title">{Helper.numberWithCommas(btsObject.Passengers.currentCount)} crossings</h3>
+						<h5 class="text-end">
+							{#if btsObject.Passengers.percentChange < 0}
+								<i
+									class="fa fa-arrow-down float-right fa-xl "
+									style="color: red;"
+									aria-hidden="true"
+								/>
+								{btsObject.Passengers.percentChange}%
+							{:else}
+								<i
+									class="fa fa-arrow-up float-right fa-xl "
+									style="color: green;"
+									aria-hidden="true"
+								/>
+								{btsObject.Passengers.percentChange}%
+							{/if}
+						</h5>
+						<p class="card-text">Passengers Crossings</p>
+					</div>
 				</div>
 				<div class="card-footer text-muted">https://bwt.cbp.gov/details</div>
 			</div>
 		</div>
 		<!-- Crossing of People-->
 		<div class="col-lg-4" style="">
-			<div class="card" style="height: 75vh;">
-				<div class="card-header text-center bg-blue">
+			<div class="card">
+				<div class="card-header text-center bg-blue ">
 					<h1 class="text-white">Crossing of Goods</h1>
+					<i class="fa-solid fa-circle-info fa-xl" id="waitTimesAbout" style="color: white" />
+					<Tooltip target={'waitTimesAbout'} placement="right"
+						>The percent of the right signifies the average recorded wait time of all accumulated {CurrentDate.weekdayLong}'s
+						at {CurrentDate.toFormat('hh:mm a')}</Tooltip
+					>
 				</div>
-				<div class="card-body">
-					<div class="container-fluid">
-						<div class="row align-items-center">
-							<div class="d-flex flex-column bd-highlight mb-3">
-								<div class="d-flex flex-column bd-highlight mb-3">
-									<div class="p-2 bd-highlight">Vehicles Crossed:</div>
-									<!-- <div class="p-2 bd-ate">Flex item 2</div> -->
-									<div class="d-flex flex-row bd-highlight mb-3 align-items-center">
-										<div class="p-2 bd-highlight">
-											{btsObject.Trucks.currentCount}
-										</div>
-										<div class="p-2 bd-highlight">
-											<i
-												class="fa fa-arrow-up float-right fa-2xl "
-												style="color: green;"
-												aria-hidden="true"
-											/>
-											{btsObject.Trucks.percentChange}%
-										</div>
-										<!-- <div class="p-2 bd-highlight">Flex item 3</div> -->
-									</div>
-								</div>
-							</div>
-							<div class="d-flex flex-column bd-highlight mb-3">
-								<div class="p-2 bd-highlight">Pedestrians Crossed:</div>
-								<!-- <div class="p-2 bd-highlight">Flex item 2</div> -->
-								<div class="d-flex flex-row bd-highlight mb-3 align-items-center">
-									<div class="p-2 bd-highlight">
-										<!-- {#await getCrossingPeople()}
-											...Loading
-										{:then object}
-											<h2>{object.Pedestrians}</h2>
-										{:catch error}
-											System error: {error.message}.
-										{/await} -->
-									</div>
-									<div class="p-2 bd-highlight">
-										<i
-											class="fa fa-arrow-up float-right fa-2xl "
-											style="color: green;"
-											aria-hidden="true"
-										/> 10%
-									</div>
-									<!-- <div class="p-2 bd-highlight">Flex item 3</div> -->
-								</div>
-							</div>
+				<div class="card my-2">
+					<div class="card-body">
+						<h5 class="card-title">Dates Selected: {startDate} to {endDate}</h5>
 
-							<div class="d-flex flex-column bd-highlight mb-3">
-								<div class="p-2 bd-highlight">Pedestrians Crossed:</div>
-								<!-- <div class="p-2 bd-highlight">Flex item 2</div> -->
-								<div class="d-flex flex-row bd-highlight mb-3 align-items-center">
-									<div class="p-2 bd-highlight">
-										<!-- {#await getCrossingPeople()}
-											...Loading
-										{:then object}
-											<h2>{object.Pedestrians}</h2>
-										{:catch error}
-											System error: {error.message}.
-										{/await} -->
-									</div>
-									<div class="p-2 bd-highlight">
-										<i
-											class="fa fa-arrow-up float-right fa-2xl "
-											style="color: green;"
-											aria-hidden="true"
-										/> 10%
-									</div>
-									<!-- <div class="p-2 bd-highlight">Flex item 3</div> -->
-								</div>
-							</div>
-						</div>
+						<!-- <p class="card-text">With supporting text below as a natural lead-in to additional content.</p> -->
+						<!-- <a href="#" class="btn btn-primary">Go somewhere</a> -->
 					</div>
-
-					<!-- svelte-ignore a11y-invalid-attribute -->
-					<!-- <a href="" class="btn btn-primary">Go somewhere</a> -->
+				</div>
+				<div class="card my-2">
+					<div class="card-body">
+						<h3 class="card-title">{Helper.numberWithCommas(btsObject.Trucks.currentCount)} crossings</h3>
+						<h5 class="text-end">
+							{#if btsObject.Trucks.percentChange < 0}
+								<i
+									class="fa fa-arrow-down float-right fa-xl "
+									style="color: red;"
+									aria-hidden="true"
+								/>
+								{btsObject.Trucks.percentChange}%
+							{:else}
+								<i
+									class="fa fa-arrow-up float-right fa-xl "
+									style="color: green;"
+									aria-hidden="true"
+								/>
+								{btsObject.Trucks.percentChange}%
+							{/if}
+						</h5>
+						<p class="card-text">Truck Crossings</p>
+					</div>
 				</div>
 				<div class="card-footer text-muted">https://bwt.cbp.gov/details</div>
 			</div>
 		</div>
+
 		<!-- Wait Times -->
 		<div class="col-lg-4" style="">
 			<div class="card">
@@ -541,106 +509,38 @@
 					</div>
 				</div>
 				{#each waitTimesObj.found as laneFound}
-				<div class="card my-2">
-					<div class="card-body">
-						<h3 class="card-title">{laneFound.delay} minutes</h3>
-						<h5 class="text-end">
-							{#if laneFound.percentChange < 0}
-								<i
-									class="fa fa-arrow-down float-right fa-xl "
-									style="color: red;"
-									aria-hidden="true"
-								/>
-								{laneFound.percentChange}%
-							{:else}
-								<i
-									class="fa fa-arrow-up float-right fa-xl "
-									style="color: green;"
-									aria-hidden="true"
-								/>
-								{laneFound.percentChange}%
-							{/if}
-						</h5>
-						<p class="card-text">{selectedPortName} {laneFound.laneName} Traffic Lane</p>
-					</div>
-				</div>
-				{/each}
-				{#each waitTimesObj.missing as laneMissing}
-				<div class="card my-2">
-					<div class="card-body">
-						<h3 class="card-title">Lane Closed</h3>
-						<p class="card-text">{selectedPortName} {laneMissing.laneName} Traffic Lane</p>
-					</div>
-				</div>
-				{/each}
-
-				<!-- <div class="card-body">
-					<h5 class="card-title" style="border: 1px solid black">
-						Last Updated: {waitTimesObj.lastUpdateTime}
-					</h5>
-					<div class="container-fluid">
-						<div class="row align-items-center">
-							<div class="d-flex flex-column bd-highlight mb-3">
-								<div class="p-2 bd-highlight">{selectedPortName} All Traffic Lane</div>
-								<div class="d-flex flex-row bd-highlight mb-3 align-items-center">
-									<div class="p-2 bd-highlight">
-										<h1>{waitTimesObj.waitTimes.generalLane.delay} minutes</h1>
-										A {waitTimesObj.waitTimes.generalLane.percentChange}% percent change from an
-										average of {waitTimesObj.waitTimes.generalLane.average} minutes over 2022 Apr 1 to
-										{CurrentDate.toFormat('yyyy LLL dd')}
-									</div>
-									<div class="p-2 bd-highlight">
-										<i
-											class="fa fa-arrow-up float-right fa-2xl "
-											style="color: green;"
-											aria-hidden="true"
-										/> 10%
-									</div>
-									<div class="px-0 bd-highlight" />
-								</div>
-							</div>
-							<div class="d-flex flex-column bd-highlight mb-3">
-								<div class="p-2 bd-highlight">{selectedPortName} Sentri Lane</div>
-								 <div class="p-2 bd-highlight">Flex item 2</div> 
-								<div class="d-flex flex-row bd-highlight mb-3 align-items-center">
-									<div class="p-2 bd-highlight">
-										<h1>{waitTimesObj.waitTimes.sentriLane.delay} minutes</h1>
-										A {waitTimesObj.waitTimes.sentriLane.percentChange}% percent change from an
-										average of {waitTimesObj.waitTimes.sentriLane.average} minutes over 2022 Apr 1 to
-										{CurrentDate.toFormat('yyyy LLL dd')}
-									</div>
-									<div class="p-2 bd-highlight">
-										<i
-											class="fa fa-arrow-up float-right fa-2xl "
-											style="color: green;"
-											aria-hidden="true"
-										/> 10%
-									</div>
-									
-								</div>
-							</div>
-							<div class="d-flex flex-column bd-highlight mb-3">
-								<div class="p-2 bd-highlight">{selectedPortName} Ready Lane</div>
-								<div class="d-flex flex-row bd-highlight mb-3 align-items-center">
-									<div class="p-2 bd-highlight">
-										<h1>{waitTimesObj.waitTimes.readyLane.delay} minutes</h1>
-										A {waitTimesObj.waitTimes.sentriLane.percentChange}% percent change from an
-										average of {waitTimesObj.waitTimes.sentriLane.average} minutes over 2022 Apr 1 to
-										{CurrentDate.toFormat('yyyy LLL dd')}
-									</div>
-									<div class="p-2 bd-highlight">
-										<i
-											class="fa fa-arrow-up float-right fa-2xl "
-											style="color: green;"
-											aria-hidden="true"
-										/> 10%
-									</div>
-								</div>
-							</div>
+					<div class="card my-2">
+						<div class="card-body">
+							<h3 class="card-title">{laneFound.delay} minutes</h3>
+							<h5 class="text-end">
+								{#if laneFound.percentChange < 0}
+									<i
+										class="fa fa-arrow-down float-right fa-xl "
+										style="color: red;"
+										aria-hidden="true"
+									/>
+									{laneFound.percentChange}%
+								{:else}
+									<i
+										class="fa fa-arrow-up float-right fa-xl "
+										style="color: green;"
+										aria-hidden="true"
+									/>
+									{laneFound.percentChange}%
+								{/if}
+							</h5>
+							<p class="card-text">{selectedPortName} {laneFound.laneName} Traffic Lane</p>
 						</div>
 					</div>
-
-				</div> -->
+				{/each}
+				{#each waitTimesObj.missing as laneMissing}
+					<div class="card my-2">
+						<div class="card-body">
+							<h3 class="card-title">Lane Closed</h3>
+							<p class="card-text">{selectedPortName} {laneMissing.laneName} Traffic Lane</p>
+						</div>
+					</div>
+				{/each}
 				<div class="card-footer text-muted">https://bwt.cbp.gov/details</div>
 			</div>
 		</div>
