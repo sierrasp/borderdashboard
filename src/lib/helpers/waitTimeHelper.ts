@@ -9,7 +9,7 @@ export default class waitTimes {
         this.portNum = portNum;
     };
     async getCurrentWaitTimes() {
-
+        console.log("HELLOO?>>");
         /**
          * I need to identify which ports are closed
          */
@@ -24,23 +24,23 @@ export default class waitTimes {
             found: [],
             missing: [],
         };
+        let lastWaitTimeURI = ``;
+        let averageWaitTimeURI = ``;
+        lastWaitTimeURI = `https://borderdashboard.com/controller/getLastWaitTimes/${this.portNum}`;
+        averageWaitTimeURI = `https://borderdashboard.com/controller/getAverageWaitTimes/${this.portNum}`;
+        console.log(averageWaitTimeURI);
+        if (dev == true) {
+            lastWaitTimeURI = `http://localhost:5173/controller/getLastWaitTimes/${this.portNum}`;
+            averageWaitTimeURI = `http://localhost:5173/controller/getAverageWaitTimes/${this.portNum}`;
+            console.log(averageWaitTimeURI);
+        };
 
         try {
-            let lastWaitTimeURI = ``;
-            let averageWaitTimeURI = ``;
-            lastWaitTimeURI = `https://borderdashboard.com/controller/getLastWaitTimes/${this.portNum}`;
-            averageWaitTimeURI = `https://borderdashboard.com/controller/getAverageWaitTimes/${this.portNum}`;
-            if (dev == true) {
-                lastWaitTimeURI = `http://localhost:3000/controller/getLastWaitTimes/${this.portNum}`;
-                averageWaitTimeURI = `http://localhost:3000/controller/getAverageWaitTimes/${this.portNum}`;
-            };
+
             console.log(lastWaitTimeURI);
             const lastWaitTimes = await this.getMostRecentDates(lastWaitTimeURI);
             console.log(lastWaitTimes);
-            const averageWaitTimes: { found: { avg: string, lane_type: number }[], missing: number[] } = await (await (await fetch(averageWaitTimeURI)).json());
-
-            // console.log(averageWaitTimesFiltered, "HELLOO??");
-            // console.log(averageWaitTimes);
+            const averageWaitTimes : { found: { avg: string, lane_type: number }[], missing: number[] } = await (await fetch(averageWaitTimeURI)).json()
             const newDate = DateTime.fromISO(`${lastWaitTimes[0].daterecorded}`, { zone: 'America/Los_Angeles' });
             let returnString = ``;
             if (Helper.getCurrentDate().day == newDate.day) {
@@ -111,35 +111,6 @@ export default class waitTimes {
             });
             returnObj["lastUpdateTime"] = returnString;
             console.log(returnObj);
-            // let's have some variable spam
-            // let generalDelay : number  | string
-            // let generalAverage = 0;
-            // let sentriDelay = 0;
-            // let sentriAverage = 0;
-            // let readyDelay = 0;
-            // let readyAverage = 0;
-            // lastWaitTimes.forEach(element => {
-            //     if (element.lane_type == 1) {       
-            //         sentriDelay = Math.round(Number(element.delay_seconds) / 60);
-            //         sentriAverage =  Math.round(Number(averageWaitTimes[1].avg) / 60);
-            //     }
-            //     if (element.lane_type == 2) {
-            //          readyDelay = Math.round(Number(element.delay_seconds) / 60); 
-            //          readyAverage = Math.round(Number(averageWaitTimes[2].avg) / 60);
-            //     }
-            //     if (element.lane_type == 0) {
-            //         generalDelay = Math.round(Number(element.delay_seconds) / 60); 
-            //         generalAverage = Math.round(Number(averageWaitTimes[0].avg) / 60);
-            //     }
-            // });
-            // const generalPercentChange = Helper.calculatePercentDifference(generalDelay, generalAverage);
-            // const sentriPercentChange = Helper.calculatePercentDifference(sentriDelay, sentriAverage);
-            // const readyPercentChange = Helper.calculatePercentDifference(readyDelay, readyAverage);
-            /**
-             * INDEX 0 = GENERAL LANE
-             * INDEX 1 = SENTRI LANE
-             * INDEX 2 = READY LANE
-             */
             this.storageID = `${Helper.getCurrentDate().toISO()}`;
             await console.log(returnObj);
             return {
@@ -201,8 +172,7 @@ export default class waitTimes {
     async getMostRecentDates(URI: string) {
         console.log(URI);
         let arrayFinalObjects: { lane_type: number, daterecorded: string, delay_seconds: number }[] = [];
-        const rows: { lane_type: number, daterecorded: string, delay_seconds: number }[] = await (await (await fetch(URI)).json());
-        console.log(rows);
+        const rows: { lane_type: number, daterecorded: string, delay_seconds: number }[] = await (await fetch(URI)).json();
         let generalLaneArr: { lane_type: number, daterecorded: string, delay_seconds: number }[] = [];
         let sentriLaneArr: { lane_type: number, daterecorded: string, delay_seconds: number }[] = [];
         let readyLaneArr: { lane_type: number, daterecorded: string, delay_seconds: number }[] = [];

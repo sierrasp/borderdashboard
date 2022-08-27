@@ -4,14 +4,11 @@
 	import { Helper } from '$lib/helpers/btsHelper';
 	// import { Datepicker } from 'svelte-calendar';
 	import waitTimes from '$lib/helpers/waitTimeHelper';
-	import {
-		easepick,
-		RangePlugin,
-		LockPlugin,
-		AmpPlugin,
-		PresetPlugin,
-		DateTime
-	} from '@easepick/bundle';
+	import { easepick, RangePlugin, LockPlugin, AmpPlugin, PresetPlugin } from '@easepick/bundle';
+	import { DateTime as EasePickDateTime } from '@easepick/bundle';
+
+	import { DateTime } from 'luxon';
+
 	/**
 	 * Svelte Strap doesn't work with svelte kit, so I had to use this workaround - npm i git+https://github.com/laxadev/sveltestrap.git
 	 */
@@ -62,7 +59,7 @@
 	const VEHICLES = ['Personal Vehicles', 'Buses', 'Trains'];
 	const PEDESTRIANS = ['Pedestrians'];
 	const TRUCKS = ['Trucks'];
-	const mergedArray = {
+	const mergedObject = {
 		Pedestrians: PEDESTRIANS,
 		Vehicles: VEHICLES,
 		Passengers: PASSENGERS,
@@ -72,7 +69,7 @@
 	/** I'm going to use the constants given above to create a default for the btsObject so the program doesn't throw an error on load*/
 
 	let btsObject: { [key: string]: { currentCount: number; percentChange: number } } = {};
-	for (const key in mergedArray) {
+	for (const key in mergedObject) {
 		btsObject[key] = {
 			currentCount: 0,
 			percentChange: 0
@@ -120,7 +117,7 @@
 	$: {
 		if (pageLoaded) {
 			setLastUpdate(selectedPortNumber);
-			getBtsGroup(mergedArray);
+			getBtsGroup(mergedObject);
 			// console.log("EHHHELELELIOISHFJLHASDJLHSDJHL");
 		}
 	}
@@ -130,6 +127,7 @@
 	 */
 	let startDate: string;
 	$: startDate = pastDateFormatted;
+	// $: startDateLuxon = DateTime.fr
 	/**
 	 * Global end date for number generation. Eg. "2021-01-01"
 	 */
@@ -143,7 +141,7 @@
 		previousEndDate = Helper.calculatePreviousDate(endDate);
 		previousStartDate = Helper.calculatePreviousDate(startDate);
 		if (pageLoaded) {
-			getBtsGroup(mergedArray);
+			getBtsGroup(mergedObject);
 		}
 	}
 
@@ -185,8 +183,8 @@
 			plugins: [AmpPlugin, RangePlugin, LockPlugin, PresetPlugin],
 			RangePlugin: {
 				tooltip: true,
-				startDate: new DateTime(PreviousDateObject),
-				endDate: new DateTime(CurrentDateObject),
+				startDate: new EasePickDateTime(PreviousDateObject),
+				endDate: new EasePickDateTime(CurrentDateObject),
 				delimiter: '-'
 			},
 			format: 'DD MMM YYYY',
@@ -229,9 +227,9 @@
 			};
 			if (isNaN(currentCount) || isNaN(percentChange)) {
 				objectToBeReturned[key] = {
-				currentCount: 0,
-				percentChange: 0
-			};
+					currentCount: 0,
+					percentChange: 0
+				};
 			}
 			console.log(objectToBeReturned);
 		}
@@ -313,22 +311,32 @@
 	}
 </script>
 
-<nav class="navbar navbar-light bg-light">
+<!-- <nav class="navbar navbar-light bg-dark">
 	<div class="container">
-		<!-- svelte-ignore a11y-invalid-attribute -->
-		<a class="navbar-brand" href="#">
-			<img
-				src="/images/smartborder.png"
-				width="30"
-				height="30"
-				class="d-inline-block align-top me-3"
+		
+		<a class="navbar-brand mx-auto" href="#">
+			<div class="bg-red" style="background-color:   #C7203B;">
+				<img
+				src="/images/smartbordercoalition-logo-white.png"
+				class="d-inline-block "
 				alt=""
+				width="250vw"
+				height="100vh"
 			/>
-			Smart Border Coalition
+			</div>
 		</a>
-		<button class="btn me-0 btn-primary"> Border Wait Time Graph </button>
+		<button class="btn me-0 btn-primary"> Border Wait Time Graph </button> 
 	</div>
-</nav>
+</nav> -->
+<div class="px-0 mx-0 custom-card">
+	<div class="bg-red" style="">
+		<img
+		src="/images/smartbordercoalition-logo-white.png"
+		class="d-inline-block"
+		width="153.77" height="64"
+	/>
+	</div>
+</div>
 
 <div class="container-fluid py-2" style="border: 1px solid black;">
 	<div class="row align-items-center justify-content-center">
@@ -357,23 +365,25 @@
 			<div class="card">
 				<div class="card-header text-center bg-green ">
 					<h1 class="text-white">Crossing of People</h1>
-					<i class="fa-solid fa-circle-info fa-xl" id="waitTimesAbout" style="color: white" />
-					<Tooltip target={'waitTimesAbout'} placement="right"
-						>The percent of the right signifies the average recorded wait time of all accumulated {CurrentDate.weekdayLong}'s
-						at {CurrentDate.toFormat('hh:mm a')}</Tooltip
-					>
+					<i class="fa-solid fa-circle-info fa-xl" id="peopleHeader" style="color: white" />
+					<Tooltip target={'peopleHeader'} placement="right"
+						>The percent of the right signifies the percent change in crossings from the selected
+						date range minus a year.
+					</Tooltip>
 				</div>
 				<div class="card my-2">
 					<div class="card-body">
 						<h5 class="card-title">Dates Selected: {startDate} to {endDate}</h5>
-
+						<h5 class="card-title">Compared to: {startDate} to {endDate}</h5>
 						<!-- <p class="card-text">With supporting text below as a natural lead-in to additional content.</p> -->
 						<!-- <a href="#" class="btn btn-primary">Go somewhere</a> -->
 					</div>
 				</div>
 				<div class="card my-2">
 					<div class="card-body">
-						<h3 class="card-title">{Helper.numberWithCommas(btsObject.Pedestrians.currentCount)} crossings</h3>
+						<h3 class="card-title">
+							{Helper.numberWithCommas(btsObject.Pedestrians.currentCount)} crossings
+						</h3>
 						<h5 class="text-end">
 							{#if btsObject.Pedestrians.percentChange < 0}
 								<i
@@ -396,7 +406,9 @@
 				</div>
 				<div class="card my-2">
 					<div class="card-body">
-						<h3 class="card-title">{Helper.numberWithCommas(btsObject.Vehicles.currentCount)} crossings</h3>
+						<h3 class="card-title">
+							{Helper.numberWithCommas(btsObject.Vehicles.currentCount)} crossings
+						</h3>
 						<h5 class="text-end">
 							{#if btsObject.Vehicles.percentChange < 0}
 								<i
@@ -414,12 +426,24 @@
 								{btsObject.Vehicles.percentChange}%
 							{/if}
 						</h5>
-						<p class="card-text">Vehicles Crossings</p>
+						<p class="card-text">
+							Vehicles Crossings <i
+								class="fa-solid fa-circle-info"
+								id={`Vehicles`}
+								style="color: black"
+							/>
+						</p>
+
+						<Tooltip target={`Vehicles`} placement="right"
+							>Total Vehicles includes Personal Vehicles, Buses, and Trains crossed</Tooltip
+						>
 					</div>
 				</div>
 				<div class="card my-2">
 					<div class="card-body">
-						<h3 class="card-title">{Helper.numberWithCommas(btsObject.Passengers.currentCount)} crossings</h3>
+						<h3 class="card-title">
+							{Helper.numberWithCommas(btsObject.Passengers.currentCount)} crossings
+						</h3>
 						<h5 class="text-end">
 							{#if btsObject.Passengers.percentChange < 0}
 								<i
@@ -437,7 +461,17 @@
 								{btsObject.Passengers.percentChange}%
 							{/if}
 						</h5>
-						<p class="card-text">Passengers Crossings</p>
+						<p class="card-text">
+							Passenger Crossings <i
+								class="fa-solid fa-circle-info"
+								id={`Passengers`}
+								style="color: black"
+							/>
+						</p>
+
+						<Tooltip target={`Passengers`} placement="right"
+							>Total Passengers includes Passengers in Personal Vehicles, Buses, and Trains crossed</Tooltip
+						>
 					</div>
 				</div>
 				<div class="card-footer text-muted">https://bwt.cbp.gov/details</div>
@@ -448,11 +482,6 @@
 			<div class="card">
 				<div class="card-header text-center bg-blue ">
 					<h1 class="text-white">Crossing of Goods</h1>
-					<i class="fa-solid fa-circle-info fa-xl" id="waitTimesAbout" style="color: white" />
-					<Tooltip target={'waitTimesAbout'} placement="right"
-						>The percent of the right signifies the average recorded wait time of all accumulated {CurrentDate.weekdayLong}'s
-						at {CurrentDate.toFormat('hh:mm a')}</Tooltip
-					>
 				</div>
 				<div class="card my-2">
 					<div class="card-body">
@@ -464,7 +493,9 @@
 				</div>
 				<div class="card my-2">
 					<div class="card-body">
-						<h3 class="card-title">{Helper.numberWithCommas(btsObject.Trucks.currentCount)} crossings</h3>
+						<h3 class="card-title">
+							{Helper.numberWithCommas(btsObject.Trucks.currentCount)} crossings
+						</h3>
 						<h5 class="text-end">
 							{#if btsObject.Trucks.percentChange < 0}
 								<i
@@ -494,11 +525,6 @@
 			<div class="card">
 				<div class="card-header text-center bg-purple ">
 					<h1 class="text-white">Current Wait Times</h1>
-					<i class="fa-solid fa-circle-info fa-xl" id="waitTimesAbout" style="color: white" />
-					<Tooltip target={'waitTimesAbout'} placement="right"
-						>The percent of the right signifies the average recorded wait time of all accumulated {CurrentDate.weekdayLong}'s
-						at {CurrentDate.toFormat('hh:mm a')}</Tooltip
-					>
 				</div>
 				<div class="card my-2">
 					<div class="card-body">
@@ -520,6 +546,17 @@
 										aria-hidden="true"
 									/>
 									{laneFound.percentChange}%
+									<i
+										class="fa-solid fa-circle-info fa-xl"
+										id={`${selectedPortName}+${laneFound.laneName}`}
+										style="color: white"
+									/>
+									<Tooltip target={`${selectedPortName}+${laneFound}`} placement="right"
+										>The percent of the right signifies the average recorded wait time of all
+										accumulated {CurrentDate.weekdayLong}'s at {CurrentDate.toFormat(
+											'hh:mm a'
+										)}</Tooltip
+									>
 								{:else}
 									<i
 										class="fa fa-arrow-up float-right fa-xl "
@@ -527,6 +564,16 @@
 										aria-hidden="true"
 									/>
 									{laneFound.percentChange}%
+									<i
+										class="fa-solid fa-circle-info "
+										id={`${laneFound.laneName}`}
+										style="color: black"
+									/>
+									<Tooltip target={`${laneFound.laneName}`} placement="right"
+										>This percentage is calculated with the average recorded wait time for the {laneFound.laneName}
+										lane on a {CurrentDate.weekdayLong}
+										at {CurrentDate.toFormat('h:00 a')}</Tooltip
+									>
 								{/if}
 							</h5>
 							<p class="card-text">{selectedPortName} {laneFound.laneName} Traffic Lane</p>
@@ -564,5 +611,12 @@
 	}
 	.bg-blue {
 		background-color: blue;
+	}
+	.custom-card {
+		background-color: black;
+		height: 100vh;
+		width: auto;
+		z-index: 100;
+		float: left;
 	}
 </style>
