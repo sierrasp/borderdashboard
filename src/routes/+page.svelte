@@ -6,13 +6,12 @@
 	import waitTimes from '$lib/helpers/waitTimeHelper';
 	import { easepick, RangePlugin, LockPlugin, AmpPlugin, PresetPlugin } from '@easepick/bundle';
 	import { DateTime as EasePickDateTime } from '@easepick/bundle';
-
 	import { DateTime } from 'luxon';
 
 	/**
 	 * Svelte Strap doesn't work with svelte kit, so I had to use this workaround - npm i git+https://github.com/laxadev/sveltestrap.git
 	 */
-	import { Tooltip } from 'sveltestrap';
+	import { Tooltip, Dropdown, DropdownItem, DropdownMenu, DropdownToggle, Label, Collapse, NavbarBrand, NavItem, NavLink, NavbarToggler, Navbar, Nav } from 'sveltestrap';
 	import Select from 'svelte-select';
 
 	/*************************** CONSTANTS AND GLOBAL VARIABLE DEFINING ****************************/
@@ -185,7 +184,7 @@
 				tooltip: true,
 				startDate: new EasePickDateTime(PreviousDateObject),
 				endDate: new EasePickDateTime(CurrentDateObject),
-				delimiter: '-'
+				delimiter: ' - '
 			},
 			format: 'DD MMM YYYY',
 			setup(picker) {
@@ -283,11 +282,15 @@
 	 * Handle port selection
 	 * @param event
 	 */
-	function handleSelect(event: { detail: any }) {
-		console.log('selected item', event.detail);
-		selectedPortNumber = event.detail.value;
-		selectedPortName = event.detail.label;
+	function handleSelect(value : number, label : string) {
+		selectedPortNumber = value;
+		selectedPortName = label;
 	}
+	// function handleSelect(event: { detail: any }) {
+	// 	console.log('selected item', event.detail);
+	// 	selectedPortNumber = event.detail.value;
+	// 	selectedPortName = event.detail.label;
+	// }
 	/**
 	 * Set last update on wait times column. Eg. 75 minutes - Last update: Today at 10:00 am.
 	 * @param port port number relating to rss feed of cbp. Eg. San Ysidro port number is 250401
@@ -309,75 +312,76 @@
 			throw new Error(rows);
 		}
 	}
+	let isOpen = false;
+	function handleUpdate(event) {
+		isOpen = event.detail.isOpen;
+  }
 </script>
-
-<!-- <nav class="navbar navbar-light bg-dark">
-	<div class="container">
-		
-		<a class="navbar-brand mx-auto" href="#">
-			<div class="bg-red" style="background-color:   #C7203B;">
-				<img
+<div class="responsiveHeight">
+	<Navbar class="h-100" color="dark" dark expand="md">
+		<NavbarBrand  style="position: absolute; left: 50%;  transform: translateX(-50%);" href="/">		<div class="bg-red">
+			<img
 				src="/images/smartbordercoalition-logo-white.png"
 				class="d-inline-block "
 				alt=""
-				width="250vw"
-				height="100vh"
+				width="153.77"
+				height="64"
 			/>
-			</div>
-		</a>
-		<button class="btn me-0 btn-primary"> Border Wait Time Graph </button> 
-	</div>
-</nav> -->
-<div class="px-0 mx-0 custom-card">
-	<div class="bg-red" style="">
-		<img
-		src="/images/smartbordercoalition-logo-white.png"
-		class="d-inline-block"
-		width="153.77" height="64"
-	/>
-	</div>
+		</div></NavbarBrand>
+		<NavbarToggler on:click={() => (isOpen = !isOpen)} />
+		
+		  <Nav class="ms-auto d-none d-md-flex align-items-center pe-3" navbar>
+			<NavItem>
+			  <NavLink href=""><h5 style="color: white;" class="my-0">Port Selected:</h5></NavLink>
+			</NavItem>
+			<NavItem>
+				<Dropdown>
+					<DropdownToggle nav style="color: white; font-size: 1.25rem" caret>{selectedPortName}</DropdownToggle>
+					<DropdownMenu>
+		{#each PORTS as port}
+		<DropdownItem on:click={() => handleSelect(port.value, port.label)}>{port.label}</DropdownItem>
+		{/each}
+					</DropdownMenu>
+				</Dropdown>
+			</NavItem>
+
+		  </Nav>
+		
+		<Collapse {isOpen} navbar>
+			<Nav navbar>
+			  <NavItem>
+				<NavLink href=""><h5 style="color: white;" class="my-0">Port Selected:</h5></NavLink>
+			  </NavItem>
+			  <NavItem>
+				<Dropdown>
+					<DropdownToggle nav style="color: white; font-size: 1.25rem" caret>{selectedPortName}</DropdownToggle>
+					<DropdownMenu>
+		{#each PORTS as port}
+		<DropdownItem on:click={() => handleSelect(port.value, port.label)}>{port.label}</DropdownItem>
+		{/each}
+					</DropdownMenu>
+				</Dropdown>
+			</NavItem>
+			</Nav>
+		  </Collapse>
+	  </Navbar>
 </div>
 
-<div class="container-fluid py-2" style="border: 1px solid black;">
-	<div class="row align-items-center justify-content-center">
-		<div class="col ">
-			<div class="d-flex justify-content-center">
-				<div class="w-50">
-					<div class="d-inline-flex justify-content-center align-items-center">
-						<h5 class="my-0 me-2">Port Selected:</h5>
-						<Select items={DropdownItems} value={DropdownDefault} on:select={handleSelect} />
-					</div>
-					<!-- Select port: <Select {items} {value} on:select={handleSelect} /> -->
-					<!-- Port Selected: <Select {items} {value} on:select={handleSelect}></Select> -->
-				</div>
-			</div>
-		</div>
-		<div class="col text-center">
-			Dates Selected: <input class="" id="dateRange" />
-		</div>
-	</div>
+<div class="card mx-auto my-2" style="width: 18rem;background: rgb(0,242,96);
+background: linear-gradient(90deg, rgba(0,242,96,1) 0%, rgba(5,117,230,1) 100%); border: none;">
+	  <div class="card-body text-center">
+    <h5 class="card-title" style="color: white">Date Selector</h5>
+    <h6 class="card-subtitle mb-2 text-muted"><input class="w-100 text-center" style="border: none; " id="dateRange" /></h6>
+  </div>
 </div>
 <!-- Crossing of goods, people, wait times-->
 <div class="container mt-3" style="height: 75vh; ">
 	<div class="row d-flex justify-content-start" style="height: 75vh;">
 		<!-- Crossing of goods-->
 		<div class="col-lg-4" style="">
-			<div class="card">
+			<div class="card" style="background-color: #f7fbfc; border: none;">
 				<div class="card-header text-center bg-green ">
 					<h1 class="text-white">Crossing of People</h1>
-					<i class="fa-solid fa-circle-info fa-xl" id="peopleHeader" style="color: white" />
-					<Tooltip target={'peopleHeader'} placement="right"
-						>The percent of the right signifies the percent change in crossings from the selected
-						date range minus a year.
-					</Tooltip>
-				</div>
-				<div class="card my-2">
-					<div class="card-body">
-						<h5 class="card-title">Dates Selected: {startDate} to {endDate}</h5>
-						<h5 class="card-title">Compared to: {startDate} to {endDate}</h5>
-						<!-- <p class="card-text">With supporting text below as a natural lead-in to additional content.</p> -->
-						<!-- <a href="#" class="btn btn-primary">Go somewhere</a> -->
-					</div>
 				</div>
 				<div class="card my-2">
 					<div class="card-body">
@@ -474,22 +478,14 @@
 						>
 					</div>
 				</div>
-				<div class="card-footer text-muted">https://bwt.cbp.gov/details</div>
+				<div class="card-footer text-muted" style="font-size: 0.7rem;">https://data.bts.gov/Research-and-Statistics/Border-Crossing-Entry-Data/keg4-3bc2/data</div>
 			</div>
 		</div>
 		<!-- Crossing of People-->
 		<div class="col-lg-4" style="">
-			<div class="card">
+			<div class="card" style="background-color: #f7fbfc; border: none;">
 				<div class="card-header text-center bg-blue ">
 					<h1 class="text-white">Crossing of Goods</h1>
-				</div>
-				<div class="card my-2">
-					<div class="card-body">
-						<h5 class="card-title">Dates Selected: {startDate} to {endDate}</h5>
-
-						<!-- <p class="card-text">With supporting text below as a natural lead-in to additional content.</p> -->
-						<!-- <a href="#" class="btn btn-primary">Go somewhere</a> -->
-					</div>
 				</div>
 				<div class="card my-2">
 					<div class="card-body">
@@ -516,13 +512,13 @@
 						<p class="card-text">Truck Crossings</p>
 					</div>
 				</div>
-				<div class="card-footer text-muted">https://bwt.cbp.gov/details</div>
+				<div class="card-footer text-muted" style="font-size: 0.7rem;">https://data.bts.gov/Research-and-Statistics/Border-Crossing-Entry-Data/keg4-3bc2/data</div>
 			</div>
 		</div>
 
 		<!-- Wait Times -->
-		<div class="col-lg-4" style="">
-			<div class="card">
+		<div class="col-lg-4">
+			<div class="card" style="background-color: #f7fbfc; border: none;">
 				<div class="card-header text-center bg-purple ">
 					<h1 class="text-white">Current Wait Times</h1>
 				</div>
@@ -547,15 +543,14 @@
 									/>
 									{laneFound.percentChange}%
 									<i
-										class="fa-solid fa-circle-info fa-xl"
-										id={`${selectedPortName}+${laneFound.laneName}`}
-										style="color: white"
+										class="fa-solid fa-circle-info"
+										id={`${laneFound.laneName}_Tag`}
+										style="color: black"
 									/>
-									<Tooltip target={`${selectedPortName}+${laneFound}`} placement="right"
-										>The percent of the right signifies the average recorded wait time of all
-										accumulated {CurrentDate.weekdayLong}'s at {CurrentDate.toFormat(
-											'hh:mm a'
-										)}</Tooltip
+									<Tooltip target={`${laneFound.laneName}_Tag`} placement="right"
+									>This percentage is calculated by comparing the current wait time to the average wait time for the {laneFound.laneName}
+									lane on a {CurrentDate.weekdayLong}
+									at {CurrentDate.toFormat('h:00 a')}</Tooltip
 									>
 								{:else}
 									<i
@@ -566,13 +561,13 @@
 									{laneFound.percentChange}%
 									<i
 										class="fa-solid fa-circle-info "
-										id={`${laneFound.laneName}`}
+										id={`${laneFound.laneName}_Tag`}
 										style="color: black"
 									/>
-									<Tooltip target={`${laneFound.laneName}`} placement="right"
-										>This percentage is calculated with the average recorded wait time for the {laneFound.laneName}
-										lane on a {CurrentDate.weekdayLong}
-										at {CurrentDate.toFormat('h:00 a')}</Tooltip
+									<Tooltip target={`${laneFound.laneName}_Tag`} placement="right"
+									>This percentage is calculated by comparing the current wait time to the average wait time for the {laneFound.laneName}
+									lane on a {CurrentDate.weekdayLong}
+									at {CurrentDate.toFormat('h:00 a')}</Tooltip
 									>
 								{/if}
 							</h5>
@@ -588,7 +583,7 @@
 						</div>
 					</div>
 				{/each}
-				<div class="card-footer text-muted">https://bwt.cbp.gov/details</div>
+				<div class="card-footer text-muted" style="font-size: 0.7rem;">https://bwt.cbp.gov</div>
 			</div>
 		</div>
 	</div>
@@ -599,24 +594,29 @@
 		<span class="text-muted">2022, Smart Border Coalition</span>
 	</div>
 </div>
-
+<div class="responsiveHeight"></div>
 <style>
 	@import url('https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css');
 	@import url('https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.1.1/css/all.min.css');
 	.bg-purple {
-		background-color: purple;
+		background: rgb(95,114,190);
+background: linear-gradient(90deg, rgba(95,114,190,1) 0%, rgba(153,33,232,1) 100%);
 	}
 	.bg-green {
-		background-color: green;
+		background: rgb(35,51,41);
+background: linear-gradient(90deg, rgba(35,51,41,1) 0%, rgba(99,212,113,1) 100%);
 	}
 	.bg-blue {
-		background-color: blue;
+		background: rgb(251,215,43);
+background: linear-gradient(90deg, rgba(251,215,43,1) 0%, rgba(249,72,74,1) 100%);
 	}
-	.custom-card {
-		background-color: black;
-		height: 100vh;
-		width: auto;
-		z-index: 100;
-		float: left;
-	}
+	@media only screen and (min-width : 750px) {
+    .responsiveHeight {
+		height: 10vh !important;
+        /* styles here */
+    }
+}
+:global(body) {
+	background-color: #f7fbfc !important;
+}
 </style>
