@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { lineChart } from '$lib/helpers/lineChart';
+	// import { lineChart } from '$lib/helpers/lineChart';
 	import { onMount } from 'svelte';
 	import { Helper } from '$lib/helpers/btsHelper';
 	// import { Datepicker } from 'svelte-calendar';
@@ -62,17 +62,44 @@
 			}
 		}
 	};
-
-	const PORTS = [
-		{ value: 250401, label: 'San Ysidro' },
-		{ value: 250601, label: 'Otay Mesa' },
-		{ value: 250301, label: 'Calexico East' },
-		{value : 0, label : "Cali Baja"}
-	];
 	/**
-	 * These are all of the crossing ports for California
-	*/
-	const CALIPORTS = ["Andrade", "Calexico", "Calexico East", "Otay Mesa", "San Ysidro", "Tecate", "Cross Border Xpress", "Otay Mesa"];
+	 * Port association with name and number
+	 */
+	const PORTS = {
+		'San Ysidro': [250401],
+		'Otay Mesa': [250601],
+		'Calexico East': [250301],
+		Andrade: [250201],
+		Tecate: [250501],
+		'Calexico West': [250302]
+	};
+
+	/**
+	 * These are all of the crossing ports for California in numerical form
+	 */
+	let CALIPORTS: number[] = [];
+	Object.entries(PORTS).forEach(([key, value]) => {
+		CALIPORTS = [...CALIPORTS, value[0]];
+	});
+	/**
+	 * These are the crossing ports for california in string form
+	 */
+	let CALINAMES: string[] = [];
+	Object.entries(PORTS).forEach(([key, value]) => {
+		CALINAMES = [...CALINAMES, key];
+	});
+	console.log(CALIPORTS);
+
+	/**
+	 * Available ports with CRON
+	 */
+	const dropperPorts = [
+		{ label: 'Calexico East', value: PORTS['Calexico East'] },
+		{ label: 'San Ysidro', value: PORTS['San Ysidro'] },
+		{ label: 'Otay Mesa', value: PORTS['Otay Mesa'] },
+		{ label: 'Cali Baja', value: CALIPORTS }
+	];
+
 	const PASSENGERS = ['Personal Vehicle Passengers', 'Train Passengers', 'Bus Passengers'];
 	const VEHICLES = ['Personal Vehicles', 'Buses', 'Trains'];
 	const PEDESTRIANS = ['Pedestrians'];
@@ -86,6 +113,9 @@
 		Passengers: PASSENGERS,
 		Trucks: TRUCKS
 	};
+	/*************************** END CONSTANT VARIABLE DEFINING ****************************/
+
+	/*************************** FLEXIBLE VARIABLE DEFINING ****************************/
 
 	/** I'm going to use the constants given above to create a default for the btsObject so the program doesn't throw an error on load*/
 
@@ -96,7 +126,7 @@
 			percentChange: 0
 		};
 	}
-	$: btsObject;
+
 	let waitTimesObj: {
 		lastUpdateTime: string;
 		found: { laneName: string; delay: number; average: number; percentChange: number }[];
@@ -110,8 +140,6 @@
 		],
 		missing: []
 	};
-	$: waitTimesObj;
-	$: console.log(waitTimesObj);
 	/**
 	 * We want to do everything once the dom has loaded
 	 */
@@ -123,87 +151,68 @@
 	$: lastUpdate;
 	// OK THE NEXT SECTION WILL HAVE CONFUSING VARIABLE NAMES - IM SORRY 🗑️
 	/**
-	 * Selected Port Number - Default : San Ysidro
-	 */
-	let selectedPortNumber: number;
-	/**
 	 * Selected Port Name - Default : San Ysidro - This name works for the Wait Times section
+	 * The reason why we need to do this is because if one of our options is an array of ports, we need to be able to maintain one port for the wait times section
 	 */
-	let selectedWaitTimePortName : string;
+	let selectedWaitTimePortName: string;
 	/**
 	 * Selected Port Names - This is the array of ports that the BTS section will take - Eg. ["San Ysidro"] or ["Tecate", "Otay Mesa"]
 	 */
-	let selectedPortNames : string[];
+	let selectedPortNames: string[] = CALINAMES;
 	/**
 	 * Unlike the wait times selection which can't take an array because it needs to be a singular port, the dropper name area can take a merge name like "CaliBaja"
 	 */
-	let dropperPortName : string;
+	let dropperPortName: string;
+	$: dropperPortName = 'CaliBaja';
 	// Let's make all of those variable names reactive and set them to defaults
-
-	$: dropperPortName = "Cali Baja";
-	$: selectedPortNumber = 250401;
-	$: selectedWaitTimePortName = `San Ysidro`;
-	$: selectedPortNames = CALIPORTS;
-/**
- * Reactivity Section 
-*/
-	$: {
-		if (pageLoaded) {
-			setLastUpdate(selectedPortNumber);
-			getBtsGroup(mergedObject);
-			// console.log("EHHHELELELIOISHFJLHASDJLHSDJHL");
-		}
-
-	}
-
+	let selectedPorts: number[] = CALIPORTS;
 	/**
-	 * Global starting date for number generation. Eg. "2020-01-01"
+	 * Reactivity Section
 	 */
-	let startDate: string;
-	$: startDate = pastDateFormatted;
-	$: console.log(startDateLuxon);
-	$: startDateLuxon = DateTime.fromSQL(startDate);
+	$: {
+		onChange(selectedPorts, pageLoaded);
+	}
+	function onChange(...args) {
+		if (pageLoaded) {
+			setLastUpdate();
+			getBtsGroup(mergedObject);
+		}
+	}
+	/*************************** START DATES SEGMENT ****************************/
 	/**
 	 * Global end date for number generation. Eg. "2021-01-01"
 	 */
 	let endDate: string;
-	$: endDate = currentDateFormatted;
-	$: endDateLuxon = DateTime.fromSQL(endDate);
-	$: previousStartDateLuxon = DateTime.fromSQL(previousStartDate);
-	$: previousEndDateLuxon = DateTime.fromSQL(previousEndDate)
-
-	/**
-	 * Updating previous dates based on changes in dates based on date selector
-	 */
-	$: {
-		previousEndDate = Helper.calculatePreviousDate(endDate);
-		previousStartDate = Helper.calculatePreviousDate(startDate);
-		if (pageLoaded) {
-			getBtsGroup(mergedObject);
-					// If dropper port name is changed, the bts data needs an update
-		dropperPortName, getBtsGroup(mergedObject);
-		// if the selected wait time port has changed ( not the dropper name ) we need an update in the wait times
-		selectedWaitTimePortName, setLastUpdate(selectedPortNumber);
-		};
-	};
-
 	/**
 	 * This is the global starting date subtracted a year, this is for the percent calculation
 	 */
 	let previousStartDate: string;
-	// $: previousStartDate = "2020-01-01";
 
 	/**
 	 * This is the global ending date subtracted a year, this is for the percent calculation
 	 */
 	let previousEndDate: string;
-	// $: previousEndDate = "2020-01-01";
+	/**
+	 * Global starting date for number generation. Eg. "2020-01-01"
+	 */
+	let startDate: string;
+	$: endDate = currentDateFormatted;
+	$: endDateLuxon = DateTime.fromSQL(endDate);
+	$: startDate = pastDateFormatted;
+	$: startDateLuxon = DateTime.fromSQL(startDate);
+	$: previousEndDate = Helper.calculatePreviousDate(endDate);
+	$: previousStartDate = Helper.calculatePreviousDate(startDate);
+	$: previousStartDateLuxon = DateTime.fromSQL(previousStartDate);
+	$: previousEndDateLuxon = DateTime.fromSQL(previousEndDate);
+
+	/*************************** END DATES SEGMENT ****************************/
 
 	/**
-	 * Dropdown Ports with Label and Port code as value
+	 * Updating previous dates based on changes in dates based on date selector
 	 */
-	const DropdownItems: { value: number; label: string }[] = PORTS;
-	const DropdownDefault = { value: 250401, label: 'San Ysidro' };
+	$: btsObject;
+	$: waitTimesObj;
+	// End of reactivity section
 
 	/*************************** ON MOUNT SECTION  ****************************/
 	onMount(async () => {
@@ -258,22 +267,21 @@
 		 */
 		let objectToBeReturned: { [key: string]: { currentCount: number; percentChange: number } } = {};
 		for (const key in obj) {
-			let currentCount = 0; 
+			let currentCount = 0;
 			let previousCount = 0;
-			console.log(selectedPortNames, "SELECTED PORT NAMES")
 			for (const port of selectedPortNames) {
 				let currentObj = await getCrossingsObject(obj[key], startDate, endDate, port);
-			let previousObj = await getCrossingsObject(
-				obj[key],
-				previousStartDate,
-				previousEndDate,
-				port
-			);
-			currentCount += Object.values(currentObj).reduce((a, b) => a + b);
-			previousCount += Object.values(previousObj).reduce((a, b) => a + b);
+				let previousObj = await getCrossingsObject(
+					obj[key],
+					previousStartDate,
+					previousEndDate,
+					port
+				);
+				currentCount += Object.values(currentObj).reduce((a, b) => a + b);
+				previousCount += Object.values(previousObj).reduce((a, b) => a + b);
 			}
 
-			console.log(previousCount, "PREVIOUS COUNT")
+			console.log(previousCount, 'PREVIOUS COUNT');
 			let percentChange = Helper.calculatePercentDifference(currentCount, previousCount);
 			objectToBeReturned[key] = {
 				currentCount: currentCount,
@@ -337,37 +345,45 @@
 	 * Handle port selection
 	 * @param event
 	 */
-	function handleSelect(value: number, label: string) {
-		selectedPortNumber = value;
-		selectedWaitTimePortName = label;
-		selectedPortNames = [`${label}`];
+	function handleSelect(value: number[], label: string) {
+		console.log(value);
+		selectedPorts = value;
 		dropperPortName = label;
-		if (label == "Cali Baja") {
-			selectedPortNames = CALIPORTS;
-			dropperPortName = "Cali Baja";
-			selectedWaitTimePortName = "San Ysidro";
-			selectedPortNumber = 250401;
-		};
+		setPortNames(value);
 	}
-	// function handleSelect(event: { detail: any }) {
-	// 	console.log('selected item', event.detail);
-	// 	selectedPortNumber = event.detail.value;
-	// 	selectedWaitTimePortName = event.detail.label;
-	// }
+	/**
+	 * This function takes the value of the bootstrap dropper (the array of port numbers), converts this array to an array of port names
+	 * @param portArray The array of port numbers
+	 */
+	function setPortNames(portArray: number[]) {
+		selectedPortNames = [];
+		for (const portNum of portArray) {
+			console.log(portNum);
+			selectedPortNames = [
+				...selectedPortNames,
+				Object.keys(PORTS).find((key) => PORTS[key][0] === portNum)!
+			];
+		}
+	}
 	/**
 	 * Set last update on wait times column. Eg. 75 minutes - Last update: Today at 10:00 am.
 	 * @param port port number relating to rss feed of cbp. Eg. San Ysidro port number is 250401
 	 */
-	async function setLastUpdate(port = 250401) {
+	async function setLastUpdate() {
 		/**
 		 * If passed port is 0, that means CaliBaja is being served. Default to San Ysidro Wait Times in that case
-		*/
-		if (port == 0) {
-			port = 250401;
+		 */
+		let port = selectedPorts;
+		if (port.length > 1) {
+			/**
+			 * If there's more than one port, set it to San Ysidro
+			 */
+			port = [250401];
+			selectedWaitTimePortName = "San Ysidro"
 		};
-		console.log(port, "PORTT");
-		let waitTimeClass = new waitTimes(port);
-		
+		selectedWaitTimePortName = selectedPortNames[0];
+		let waitTimeClass = new waitTimes(port[0]);
+
 		let { returnObj } = await waitTimeClass.getCurrentWaitTimes();
 		waitTimesObj = returnObj;
 	}
@@ -414,7 +430,7 @@
 						>{dropperPortName}</DropdownToggle
 					>
 					<DropdownMenu>
-						{#each PORTS as port}
+						{#each dropperPorts as port}
 							<DropdownItem on:click={() => handleSelect(port.value, port.label)}
 								>{port.label}</DropdownItem
 							>
@@ -432,10 +448,10 @@
 				<NavItem>
 					<Dropdown>
 						<DropdownToggle nav style="color: white; font-size: 1.25rem" caret
-							>{selectedWaitTimePortName}</DropdownToggle
+							>{dropperPortName}</DropdownToggle
 						>
 						<DropdownMenu>
-							{#each PORTS as port}
+							{#each dropperPorts as port}
 								<DropdownItem on:click={() => handleSelect(port.value, port.label)}
 									>{port.label}</DropdownItem
 								>
@@ -448,7 +464,13 @@
 	</Navbar>
 </div>
 <div class="responsiveHeight d-none d-md-block">
-	<Navbar class="h-100" color="secondary" dark expand="md" style="z-index: 99 !important; background-color: #2f5bbc !important;">
+	<Navbar
+		class="h-100"
+		color="secondary"
+		dark
+		expand="md"
+		style="z-index: 99 !important; background-color: #2f5bbc !important;"
+	>
 		<NavbarBrand
 			class="w-50"
 			style="position: absolute; left: 50%;  transform: translateX(-50%);"
@@ -482,16 +504,23 @@ background: linear-gradient(90deg, rgba(0,242,96,1) 0%, rgba(5,117,230,1) 100%);
 				<div class="card-header text-center bg-green ">
 					<h1 class="text-white">Crossing of People</h1>
 				</div>
-				<div class="card my-2"  style="border: none;">
+				<div class="card my-2" style="border: none;">
 					<div class="card-body p-0">
 						<div class="d-inline-flex container-fluid justify-content-between">
 							<div class="w-25">
-								<h6 class="my-0">From {startDateLuxon.toFormat('LLL dd yyyy')} to {endDateLuxon.toFormat('LLL dd yyyy')}</h6>
+								<h6 class="my-0">
+									From {startDateLuxon.toFormat('LLL dd yyyy')} to {endDateLuxon.toFormat(
+										'LLL dd yyyy'
+									)}
+								</h6>
 							</div>
 							<div class="w-25">
-								<h6 class="my-0 text-end">Compared to {previousStartDateLuxon.toFormat('LLL dd yyyy')} to {previousEndDateLuxon.toFormat('LLL dd yyyy')}</h6>
+								<h6 class="my-0 text-end">
+									Compared to {previousStartDateLuxon.toFormat('LLL dd yyyy')} to {previousEndDateLuxon.toFormat(
+										'LLL dd yyyy'
+									)}
+								</h6>
 							</div>
-
 						</div>
 					</div>
 				</div>
@@ -543,11 +572,7 @@ background: linear-gradient(90deg, rgba(0,242,96,1) 0%, rgba(5,117,230,1) 100%);
 							{/if}
 						</h5>
 						<p class="card-text">
-							VEHICLES <i
-								class="fa-solid fa-circle-info"
-								id={`Vehicles`}
-								style="color: black"
-							/>
+							VEHICLES <i class="fa-solid fa-circle-info" id={`Vehicles`} style="color: black" />
 						</p>
 
 						<Tooltip target={`Vehicles`} placement="right"
@@ -558,7 +583,7 @@ background: linear-gradient(90deg, rgba(0,242,96,1) 0%, rgba(5,117,230,1) 100%);
 				<div class="card my-2" style="border: none;">
 					<div class="card-body">
 						<h3 class="card-title">
-							{Helper.numberWithCommas(btsObject.Passengers.currentCount)} 
+							{Helper.numberWithCommas(btsObject.Passengers.currentCount)}
 						</h3>
 						<h5 class="text-end">
 							{#if btsObject.Passengers.percentChange < 0}
@@ -616,7 +641,7 @@ background: linear-gradient(90deg, rgba(0,242,96,1) 0%, rgba(5,117,230,1) 100%);
 				<div class="card my-2" style="border: none;">
 					<div class="card-body">
 						<h3 class="card-title">
-							{Helper.numberWithCommas(btsObject.Trucks.currentCount)} 
+							{Helper.numberWithCommas(btsObject.Trucks.currentCount)}
 						</h3>
 						<h5 class="text-end">
 							{#if btsObject.Trucks.percentChange < 0}
@@ -712,7 +737,10 @@ background: linear-gradient(90deg, rgba(0,242,96,1) 0%, rgba(5,117,230,1) 100%);
 					<div class="card my-2" style="border: none;">
 						<div class="card-body">
 							<h3 class="card-title">Lane Closed</h3>
-							<p class="card-text">{selectedWaitTimePortName} {laneMissing.laneName} Traffic Lane</p>
+							<p class="card-text">
+								{selectedWaitTimePortName}
+								{laneMissing.laneName} Traffic Lane
+							</p>
 						</div>
 					</div>
 				{/each}

@@ -23,7 +23,6 @@ export class Helper {
         // Instead of Callback hell, I've opted for a more streamline approach. 
         // Create objects using the helper class that have these important variables built in.
         const URI = Helper.constructBtsRequest(startDate, endDate, portName, state, measure);
-        console.log(URI);
         this.startDate = `${startDate}`;
         this.endDate = `${endDate}`;
         this.storageID = `${startDate}_to_${endDate}_${portName}`;
