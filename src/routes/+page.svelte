@@ -1,3 +1,4 @@
+
 <script lang="ts">
 	// import { lineChart } from '$lib/helpers/lineChart';
 	import { onMount } from 'svelte';
@@ -7,6 +8,20 @@
 	import { easepick, RangePlugin, LockPlugin, AmpPlugin, PresetPlugin } from '@easepick/bundle';
 	import { DateTime as EasePickDateTime } from '@easepick/bundle';
 	import { DateTime } from 'luxon';
+	import Flatpickr from 'flatpickr';
+	import monthSelectPlugin from 'flatpickr/dist/plugins/monthSelect';
+    import 'flatpickr/dist/flatpickr.css';
+	import 'flatpickr/dist/plugins/monthSelect/style.css';
+
+    // let value, formattedValue;
+
+    // const options = {
+    //     enableTime: true,
+    //     onChange(selectedDates, dateStr) {
+    //         console.log('flatpickr hook', selectedDates, dateStr);
+    //     }
+    // };
+
 
 	/**
 	 * Svelte Strap doesn't work with svelte kit, so I had to use this workaround - npm i git+https://github.com/laxadev/sveltestrap.git
@@ -27,6 +42,8 @@
 		Nav
 	} from 'sveltestrap';
 	import Select from 'svelte-select';
+import type { Instance } from 'flatpickr/dist/types/instance';
+import { element } from 'svelte/internal';
 
 	/*************************** CONSTANTS AND GLOBAL VARIABLE DEFINING ****************************/
 	/**
@@ -167,6 +184,10 @@
 	// Let's make all of those variable names reactive and set them to defaults
 	let selectedPorts: number[] = CALIPORTS;
 	/**
+	 * Calendar
+	*/
+	let calendar: Instance;
+	/**
 	 * Reactivity Section
 	 */
 	$: {
@@ -176,8 +197,35 @@
 		if (pageLoaded) {
 			setLastUpdate();
 			getBtsGroup(mergedObject);
+			let element = document.getElementById("dateCalendar")!;
+			 calendar = Flatpickr(element, {
+							onValueUpdate: (selectedDates, dateStr, instance) => {
+				if (value != dateStr) // onValueUpdate fired even if no change happend
+					console.log('change', dateStr);
+
+				value = dateStr;
+
+				if (value == '')
+					console.log('clear');
+			},
+			plugins: [
+         monthSelectPlugin({
+          shorthand: false, //defaults to false
+          dateFormat: "m.y", //defaults to "F Y"
+          altFormat: "F Y", //defaults to "F Y"
+          theme: "dark" // defaults to "light"
+        })
+    ]
+});
 		}
 	}
+
+	function openCalendar(){
+	setTimeout(function(){
+		calendar.open();
+	}, 0);
+	
+}
 	/*************************** START DATES SEGMENT ****************************/
 	/**
 	 * Global end date for number generation. Eg. "2021-01-01"
@@ -213,45 +261,68 @@
 	$: btsObject;
 	$: waitTimesObj;
 	// End of reactivity section
-
+	
+	let ref : any;
+	let value = '';
 	/*************************** ON MOUNT SECTION  ****************************/
 	onMount(async () => {
 		createDateRangePicker();
 		pageLoaded = true;
+		// Flatpickr(ref, {
+		// 	allowInput: true,
+		// 	disableMobile: true,
+		// 	clickOpens: true,
+		// 	maxDate: '2001-01-01',
+		// 	onValueUpdate: (selectedDates, dateStr, instance) => {
+		// 		if (value != dateStr) // onValueUpdate fired even if no change happend
+		// 			console.log('change', dateStr);
+
+		// 		value = dateStr;
+
+		// 		if (value == '')
+		// 			console.log('clear');
+		// 	}
+		// });
 	});
+	// });
 	/*************************** DATE SELECTOR ****************************/
 	/**
 	 * Create Date Range Picker using dom acccess. We're using current dates, so the calendar will be updated consistently
 	 */
 	function createDateRangePicker() {
-		new easepick.create({
-			element: document.getElementById('dateRange')!,
-			css: [
-				'https://cdn.jsdelivr.net/npm/@easepick/bundle@1.2.0/dist/index.css',
-				'https://easepick.com/css/customize_sample.css'
-			],
-			zIndex: 1000,
-			PresetPlugin: {
-				position: 'right'
-			},
-			plugins: [AmpPlugin, RangePlugin, LockPlugin, PresetPlugin],
-			RangePlugin: {
-				tooltip: true,
-				startDate: new EasePickDateTime(PreviousDateObject),
-				endDate: new EasePickDateTime(CurrentDateObject),
-				delimiter: ' to '
-			},
-			format: 'MMM DD YYYY',
-			setup(picker) {
-				picker.on('select', (e) => {
-					const startdate: Date = e.detail.start;
-					const enddate: Date = e.detail.end;
-					startDate = Helper.dateFormatGenerator(startdate);
-					endDate = Helper.dateFormatGenerator(enddate);
-					getBtsGroup(mergedObject);
-				});
-			}
-		});
+		/**
+		 * Date Range Element
+		 */
+		// let element = document.getElementById('dateRange')! 
+		// new easepick.create({
+		// 	element: element,
+		// 	css: [
+		// 		'https://cdn.jsdelivr.net/npm/@easepick/bundle@1.2.0/dist/index.css',
+		// 		'https://easepick.com/css/customize_sample.css'
+		// 	],
+		// 	zIndex: 1000,
+		// 	PresetPlugin: {
+		// 		position: 'right'
+		// 	},
+		// 	plugins: [AmpPlugin, RangePlugin, LockPlugin, PresetPlugin],
+		// 	RangePlugin: {
+		// 		tooltip: true,
+		// 		startDate: new EasePickDateTime(PreviousDateObject),
+		// 		endDate: new EasePickDateTime(CurrentDateObject),
+		// 		delimiter: ' to '
+		// 	},
+		// 	format: 'MMM DD YYYY',
+		// 	setup(picker) {
+		// 		picker.on('select', (e) => {
+		// 			const startdate: Date = e.detail.start;
+		// 			const enddate: Date = e.detail.end;
+		// 			startDate = Helper.dateFormatGenerator(startdate);
+		// 			endDate = Helper.dateFormatGenerator(enddate);
+		// 			getBtsGroup(mergedObject);
+		// 		});
+		// 	}
+		// });
+		// Flatpickr(element, {});
 	}
 	/**
 	 * So this function takes in an object of whatever subgroups I want to calculate for - Eg. If I want to calculate for the pedestrians and a subset of measures called "Vehicles",
@@ -269,7 +340,10 @@
 		for (const key in obj) {
 			let currentCount = 0;
 			let previousCount = 0;
-			for (const port of selectedPortNames) {
+			for (let port of selectedPortNames) {
+				if (port == "Calexico West") {
+					port = "Calexico"
+				}
 				let currentObj = await getCrossingsObject(obj[key], startDate, endDate, port);
 				let previousObj = await getCrossingsObject(
 					obj[key],
@@ -469,7 +543,7 @@
 		color="secondary"
 		dark
 		expand="md"
-		style="z-index: 99 !important; background-color: #2f5bbc !important;"
+		style="z-index: 99 !important; background-color:  !important;"
 	>
 		<NavbarBrand
 			class="w-50"
@@ -478,7 +552,10 @@
 		>
 			<div class="d-inline-flex justify-content-center w-100">
 				<h5 class="my-0 me-2">Date Selector:</h5>
-				<input class="w-50  h-50 text-center" style="border: none; " id="dateRange" />
+				<!-- <input class="w-50  h-50 text-center" style="border: none; " id="dateRange" /> -->
+				<!-- <input class="" id="dateRange"> -->
+				<input id="dateCalendar" on:click={() => openCalendar()}/>
+				<!-- <Flatpickr {options} bind:value bind:formattedValue on:change={handleChange} name="date" /> -->
 			</div>
 		</NavbarBrand>
 	</Navbar>
@@ -488,12 +565,6 @@
 	style="width: 18rem;background: rgb(0,242,96);
 background: linear-gradient(90deg, rgba(0,242,96,1) 0%, rgba(5,117,230,1) 100%); border: none;"
 >
-	<!-- <div class="card-body text-center">
-		<h5 class="card-title" style="color: white">Date Selector</h5>
-		<h6 class="card-subtitle mb-2 text-muted">
-			<input class="w-100 text-center" style="border: none; " id="dateRange" />
-		</h6>
-	</div> -->
 </div>
 <!-- Crossing of goods, people, wait times-->
 <div class="container mt-3" style="height: 100vh; overflow: visible;">
@@ -526,27 +597,38 @@ background: linear-gradient(90deg, rgba(0,242,96,1) 0%, rgba(5,117,230,1) 100%);
 				</div>
 				<div class="card my-2" style="border: none;">
 					<div class="card-body">
-						<h3 class="card-title">
-							{Helper.numberWithCommas(btsObject.Pedestrians.currentCount)}
-						</h3>
-						<h5 class="text-end">
-							{#if btsObject.Pedestrians.percentChange < 0}
-								<i
-									class="fa fa-angle-double-down float-right fa-xl "
-									style="color: red;"
-									aria-hidden="true"
-								/>
-								{btsObject.Pedestrians.percentChange}%
-							{:else}
-								<i
-									class="fa fa-angle-double-up float-right fa-xl "
-									style="color: green;"
-									aria-hidden="true"
-								/>
-								{btsObject.Pedestrians.percentChange}%
-							{/if}
-						</h5>
-						<p class="card-text">PEDESTRIANS</p>
+						<div class="d-flex justify-content-between">
+							<div class="d-flex flex-column">
+								<h3 >
+									{Helper.numberWithCommas(btsObject.Pedestrians.currentCount)}
+								</h3>
+								<p class="card-text">PEDESTRIANS</p>
+							</div>
+							<!-- <i
+							class="fa fa-angle-double-up float-right fa-xl "
+							style="color: green;"
+							aria-hidden="true"
+						/> -->
+						<div class="d-flex d-inline-flex align-items-center">									<i
+							class="fa fa-angle-double-up float-right fa-xl "
+							style="color: green;"
+							aria-hidden="true"
+						/>{btsObject.Pedestrians.percentChange}%</div>
+							<!-- <h5 class="p-0 m-0 text-center">
+								{#if btsObject.Pedestrians.percentChange < 0}
+									 <i
+										class="fa fa-angle-double-down float-right fa-xl "
+										style="color: red;"
+										aria-hidden="true"
+									/> 
+									{btsObject.Pedestrians.percentChange}%
+								{:else}
+									{btsObject.Pedestrians.percentChange}%
+								{/if}
+							</h5> -->
+						</div>
+
+						
 					</div>
 				</div>
 				<div class="card my-2" style="border: none;">
@@ -762,13 +844,13 @@ background: linear-gradient(90deg, rgba(0,242,96,1) 0%, rgba(5,117,230,1) 100%);
 	@import url('https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.1.1/css/all.min.css');
 	@import url('https://fonts.googleapis.com/css2?family=Raleway&display=swap');
 	.bg-purple {
-		background: rgb(95, 114, 190);
+		background-color: #10376F
 	}
 	.bg-green {
-		background: rgb(99, 212, 113, 1);
+		background-color:#10376F
 	}
 	.bg-blue {
-		background: rgb(249, 72, 74, 1);
+		background-color: #10376F
 	}
 	@media only screen and (min-width: 750px) {
 		.responsiveHeight {
