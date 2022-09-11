@@ -42,11 +42,12 @@ export default class waitTimes {
             console.log(lastWaitTimes);
             const averageWaitTimes : { found: { avg: string, lane_type: number }[], missing: number[] } = await (await fetch(averageWaitTimeURI)).json()
             const newDate = DateTime.fromISO(`${lastWaitTimes[0].daterecorded}`, { zone: 'America/Los_Angeles' });
+            const currentDate = DateTime.local().setZone("America/Tijuana");
             let returnString = ``;
-            if (Helper.getCurrentDate().day == newDate.day) {
+            if (currentDate.day == newDate.day) {
                 returnString = `Today at ${this.toAPM(newDate)}`;
             }
-            else if (newDate.day == Helper.getCurrentDate().day - 1) {
+            else if (newDate.day == currentDate.day - 1) {
                 returnString = `Yesterday at ${this.toAPM(newDate)}`;
             }
             else {
@@ -111,7 +112,7 @@ export default class waitTimes {
             });
             returnObj["lastUpdateTime"] = returnString;
             console.log(returnObj);
-            this.storageID = `${Helper.getCurrentDate().toISO()}`;
+            this.storageID = `${currentDate.toISO()}`;
             await console.log(returnObj);
             return {
                 returnObj

@@ -49,6 +49,9 @@ export class Helper {
         console.log(`https://data.transportation.gov/resource/keg4-3bc2.json?$limit=100000&$where=date between '${startDate}T00:00:00.000' and '${endDate}T00:00:00.000'&border=US-Mexico Border${stateString}${measureString}${portString}`);
         return `https://data.transportation.gov/resource/keg4-3bc2.json?$limit=100000&$where=date between '${startDate}T00:00:00.000' and '${endDate}T00:00:00.000'&border=US-Mexico Border${stateString}${measureString}${portString}`
     }
+    // static cacheData(startDate : string, endDate : string) {
+    //     return 
+    // }
     /**
      * 
      * @param year Eg. 2021
@@ -70,8 +73,18 @@ export class Helper {
  * @returns An object with current year, current month, and current day. Eg, {year : 2022, month : 9, day : 1}
  */
 
-    static getCurrentDate() {
-        return DateTime.local().setZone("America/Tijuana");
+    static  async getLastDate() {
+        const data : IBtsData[] = await (await fetch('https://data.bts.gov/id/keg4-3bc2.json?$limit=100000&$where=date%20between%20%272021-09-01T00:00:00.000%27%20and%20%272022-09-01T00:00:00.000%27&border=US-Mexico%20Border')).json();
+        let dates : any[] = [];
+        data.forEach(el => {
+            dates = [...dates, new Date(el.date)]
+        });
+        // const maxDate=new Date(Math.max.apply(null,dates));
+        const maxDate = new Date(Math.max(...dates));
+        console.log(maxDate)
+        // return maxDate;
+        return DateTime.fromJSDate(maxDate).setZone("America/Tijuana").plus({ months: 1 });
+        
     };
     /**
      * 
@@ -108,6 +121,7 @@ export class Helper {
             this.store(data);
         }
         return this.retrieveStored();
+        // return data;
     };
     /**
     * @property Possible Measures - ["Pedestrians", "Trains", "Buses", "Personal Vehicle Passengers", "Personal Vehicles", "Trucks", "Train Passengers", "Bus Passengers"]

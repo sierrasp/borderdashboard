@@ -1,4 +1,3 @@
-
 <script lang="ts">
 	// import { lineChart } from '$lib/helpers/lineChart';
 	import { onMount } from 'svelte';
@@ -10,18 +9,8 @@
 	import { DateTime } from 'luxon';
 	import Flatpickr from 'flatpickr';
 	import monthSelectPlugin from 'flatpickr/dist/plugins/monthSelect';
-    import 'flatpickr/dist/flatpickr.css';
+	import 'flatpickr/dist/flatpickr.css';
 	import 'flatpickr/dist/plugins/monthSelect/style.css';
-
-    // let value, formattedValue;
-
-    // const options = {
-    //     enableTime: true,
-    //     onChange(selectedDates, dateStr) {
-    //         console.log('flatpickr hook', selectedDates, dateStr);
-    //     }
-    // };
-
 
 	/**
 	 * Svelte Strap doesn't work with svelte kit, so I had to use this workaround - npm i git+https://github.com/laxadev/sveltestrap.git
@@ -42,8 +31,9 @@
 		Nav
 	} from 'sveltestrap';
 	import Select from 'svelte-select';
-import type { Instance } from 'flatpickr/dist/types/instance';
-import { element } from 'svelte/internal';
+	import type { Instance } from 'flatpickr/dist/types/instance';
+	import { element } from 'svelte/internal';
+	import { page } from '$app/stores';
 
 	/*************************** CONSTANTS AND GLOBAL VARIABLE DEFINING ****************************/
 	/**
@@ -90,6 +80,10 @@ import { element } from 'svelte/internal';
 		Tecate: [250501],
 		'Calexico West': [250302]
 	};
+	/**
+	 * We want to do everything once the dom has loaded
+	 */
+	let pageLoaded = false;
 
 	/**
 	 * These are all of the crossing ports for California in numerical form
@@ -157,15 +151,14 @@ import { element } from 'svelte/internal';
 		],
 		missing: []
 	};
-	/**
-	 * We want to do everything once the dom has loaded
-	 */
-	let pageLoaded = false;
+	$: btsObject;
+	$: waitTimesObj;
 	/**
 	 * When data was last updated in database - Eg. "Today at 10:00pm"
 	 */
 	let lastUpdate: string;
 	$: lastUpdate;
+	$: console.log(lastUpdate, 'LAST UPDATE');
 	// OK THE NEXT SECTION WILL HAVE CONFUSING VARIABLE NAMES - IM SORRY 🗑️
 	/**
 	 * Selected Port Name - Default : San Ysidro - This name works for the Wait Times section
@@ -180,53 +173,40 @@ import { element } from 'svelte/internal';
 	 * Unlike the wait times selection which can't take an array because it needs to be a singular port, the dropper name area can take a merge name like "CaliBaja"
 	 */
 	let dropperPortName: string;
-	$: dropperPortName = 'CaliBaja';
+	$: dropperPortName = 'Cali-Baja';
 	// Let's make all of those variable names reactive and set them to defaults
 	let selectedPorts: number[] = CALIPORTS;
 	/**
 	 * Calendar
-	*/
-	let calendar: Instance;
-	/**
-	 * Reactivity Section
 	 */
+	let calendarStart: Instance;
+	let calendarEnd: Instance;
+
+	let totalTrade: { currentTrade: number; percentChange: number } = {
+		currentTrade: 0,
+		percentChange: 0
+	};
+	$: totalTrade;
+
+	/*************************** END FLEXIBLE VARIABLE DEFINING ****************************/
+
+	/*************************** SVELTE REACTIVITY DEFINING ****************************/
 	$: {
-		onChange(selectedPorts, pageLoaded);
+		onDateChange(endDate, startDate);
 	}
-	function onChange(...args) {
+	function onDateChange(...args) {
 		if (pageLoaded) {
-			setLastUpdate();
-			getBtsGroup(mergedObject);
-			let element = document.getElementById("dateCalendar")!;
-			 calendar = Flatpickr(element, {
-							onValueUpdate: (selectedDates, dateStr, instance) => {
-				if (value != dateStr) // onValueUpdate fired even if no change happend
-					console.log('change', dateStr);
-
-				value = dateStr;
-
-				if (value == '')
-					console.log('clear');
-			},
-			plugins: [
-         monthSelectPlugin({
-          shorthand: false, //defaults to false
-          dateFormat: "m.y", //defaults to "F Y"
-          altFormat: "F Y", //defaults to "F Y"
-          theme: "dark" // defaults to "light"
-        })
-    ]
-});
+			setCalendar();
 		}
 	}
 
-	function openCalendar(){
-	setTimeout(function(){
-		calendar.open();
-	}, 0);
-	
-}
+	/*************************** END SVELTE REACTIVITY DEFINING ****************************/
+
 	/*************************** START DATES SEGMENT ****************************/
+	/**
+	 * Actual CURRENT DATE - not last update
+	 */
+	const CurrentDate = DateTime.local().setZone('America/Tijuana');
 	/**
 	 * Global end date for number generation. Eg. "2021-01-01"
 	 */
@@ -244,9 +224,10 @@ import { element } from 'svelte/internal';
 	 * Global starting date for number generation. Eg. "2020-01-01"
 	 */
 	let startDate: string;
-	$: endDate = currentDateFormatted;
+
+	$: endDate = lastUpdateDateFormatted;
 	$: endDateLuxon = DateTime.fromSQL(endDate);
-	$: startDate = pastDateFormatted;
+	$: startDate = lastUpdatePreviousDateFormatted;
 	$: startDateLuxon = DateTime.fromSQL(startDate);
 	$: previousEndDate = Helper.calculatePreviousDate(endDate);
 	$: previousStartDate = Helper.calculatePreviousDate(startDate);
@@ -255,75 +236,89 @@ import { element } from 'svelte/internal';
 
 	/*************************** END DATES SEGMENT ****************************/
 
-	/**
-	 * Updating previous dates based on changes in dates based on date selector
-	 */
-	$: btsObject;
-	$: waitTimesObj;
-	// End of reactivity section
-	
-	let ref : any;
-	let value = '';
 	/*************************** ON MOUNT SECTION  ****************************/
 	onMount(async () => {
-		createDateRangePicker();
 		pageLoaded = true;
-		// Flatpickr(ref, {
-		// 	allowInput: true,
-		// 	disableMobile: true,
-		// 	clickOpens: true,
-		// 	maxDate: '2001-01-01',
-		// 	onValueUpdate: (selectedDates, dateStr, instance) => {
-		// 		if (value != dateStr) // onValueUpdate fired even if no change happend
-		// 			console.log('change', dateStr);
-
-		// 		value = dateStr;
-
-		// 		if (value == '')
-		// 			console.log('clear');
-		// 	}
-		// });
+		await setLastUpdate();
+		console.log('bts group called', selectedPorts, pageLoaded);
+		await getBtsGroup(mergedObject);
+		getTradeValue();
+		// await setDates();
 	});
 	// });
 	/*************************** DATE SELECTOR ****************************/
 	/**
-	 * Create Date Range Picker using dom acccess. We're using current dates, so the calendar will be updated consistently
+	 * Create Date Range Picker using dom acccess. We're using current last updated dates, so the calendar will be updated consistently
 	 */
-	function createDateRangePicker() {
-		/**
-		 * Date Range Element
-		 */
-		// let element = document.getElementById('dateRange')! 
-		// new easepick.create({
-		// 	element: element,
-		// 	css: [
-		// 		'https://cdn.jsdelivr.net/npm/@easepick/bundle@1.2.0/dist/index.css',
-		// 		'https://easepick.com/css/customize_sample.css'
-		// 	],
-		// 	zIndex: 1000,
-		// 	PresetPlugin: {
-		// 		position: 'right'
-		// 	},
-		// 	plugins: [AmpPlugin, RangePlugin, LockPlugin, PresetPlugin],
-		// 	RangePlugin: {
-		// 		tooltip: true,
-		// 		startDate: new EasePickDateTime(PreviousDateObject),
-		// 		endDate: new EasePickDateTime(CurrentDateObject),
-		// 		delimiter: ' to '
-		// 	},
-		// 	format: 'MMM DD YYYY',
-		// 	setup(picker) {
-		// 		picker.on('select', (e) => {
-		// 			const startdate: Date = e.detail.start;
-		// 			const enddate: Date = e.detail.end;
-		// 			startDate = Helper.dateFormatGenerator(startdate);
-		// 			endDate = Helper.dateFormatGenerator(enddate);
-		// 			getBtsGroup(mergedObject);
-		// 		});
-		// 	}
-		// });
-		// Flatpickr(element, {});
+	function setCalendar() {
+		let valueStart = '';
+		let valueEnd = '';
+		let elementStart = document.getElementById('dateCalendarStart')!;
+		let elementFinish = document.getElementById('dateCalendarEnd')!;
+		calendarStart = Flatpickr(elementStart, {
+			onValueUpdate: (selectedDates, dateStr, instance) => {
+				if (valueStart != dateStr)
+					// onValueUpdate fired even if no change happend
+					startDate = dateStr;
+				getBtsGroup(mergedObject);
+				console.log('change', dateStr);
+
+				valueStart = dateStr;
+
+				if (valueStart == '') console.log('clear');
+			},
+			defaultDate: startDate,
+			plugins: [
+				monthSelectPlugin({
+					shorthand: false, //defaults to false
+					dateFormat: 'Y-m-d', //defaults to "F Y"
+					altFormat: 'F j, Y',
+
+					theme: 'dark' // defaults to "light"
+				})
+			]
+		});
+		calendarEnd = Flatpickr(elementFinish, {
+			onValueUpdate: (selectedDates, dateStr, instance) => {
+				if (valueEnd != dateStr) {
+					console.log(dateStr);
+					endDate = dateStr;
+					getBtsGroup(mergedObject);
+					// conversionDateEnd = DateTime.fromFormat(dateStr, 'yyyy-MM-d');
+				}
+				// onValueUpdate fired even if no change happend
+				console.log('change', dateStr);
+
+				valueEnd = dateStr;
+
+				if (valueEnd == '') console.log('clear');
+			},
+			defaultDate: endDate,
+			plugins: [
+				monthSelectPlugin({
+					shorthand: false, //defaults to false
+					dateFormat: 'Y-m-d', //defaults to "F Y"
+					altFormat: 'F j, Y',
+
+					theme: 'dark' // defaults to "light"
+				})
+			]
+		});
 	}
+	/**
+	 * Open Calendar - Workaround for Flatpickr's terrible calendar opening (clicking on the element apparently doesnt' work normally)
+	 * @param start Is the Calendar for the Start date or for the end date?
+	 */
+	function openCalendar(start: boolean) {
+		setTimeout(function () {
+			if (start) {
+				calendarStart.open();
+			} else {
+				calendarEnd.open();
+			}
+		}, 5);
+	}
+	/*************************** END DATE SELECTOR ****************************/
 	/**
 	 * So this function takes in an object of whatever subgroups I want to calculate for - Eg. If I want to calculate for the pedestrians and a subset of measures called "Vehicles",
 	 *
@@ -336,14 +331,23 @@ import { element } from 'svelte/internal';
 		 * This object will be sommething like -
 		 * 	"Vehicles" : {currentCount : 100000, percentChange : 10%}
 		 */
+		/**
+		 * Let's wait for our dates to be generated - Remember, these aren't the current dates but dates generated off when BTS has last updated their data
+		 */
+		await setDates();
+
+		// ok the wait is over
 		let objectToBeReturned: { [key: string]: { currentCount: number; percentChange: number } } = {};
 		for (const key in obj) {
+			console.log(key);
 			let currentCount = 0;
 			let previousCount = 0;
 			for (let port of selectedPortNames) {
-				if (port == "Calexico West") {
-					port = "Calexico"
+				console.log('PORT : ', port);
+				if (port == 'Calexico West') {
+					port = 'Calexico';
 				}
+				console.log(port);
 				let currentObj = await getCrossingsObject(obj[key], startDate, endDate, port);
 				let previousObj = await getCrossingsObject(
 					obj[key],
@@ -370,7 +374,6 @@ import { element } from 'svelte/internal';
 			console.log(objectToBeReturned);
 		}
 		btsObject = objectToBeReturned;
-		// console.log(btsObject);
 	}
 
 	/*************************** DOM FUNCTIONS HANDLING BTS DATA ****************************/
@@ -394,25 +397,89 @@ import { element } from 'svelte/internal';
 		let calculatedCrossingsObject = await instance.calculateCrossings(measures);
 		return calculatedCrossingsObject;
 	}
-	const CurrentDate = Helper.getCurrentDate();
 	/**
-	 * These dates are for the Svelte Calendar start and end generation
+	 * When was the BTS data last updated - this is the date formatted
 	 */
-	const CurrentDateObject = new Date(CurrentDate.year, CurrentDate.month - 1, 1);
+	let lastUpdateDateBts: DateTime = DateTime.local().setZone('America/Tijuana');
 	/**
-	 * These dates are for the Svelte Calendar start and end generation
+	 * This is the date above but in object format
 	 */
-	const PreviousDateObject = new Date(CurrentDate.year - 1, CurrentDate.month - 1, 1);
-	// console.log(PreviousDateObject);
+	let lastUpdateDateObject: Date = new Date('2021-01-01');
+	/**
+	 * This is previous date ( 1 year prior)
+	 */
+	let lastUpdatePreviousDateObject: Date = new Date('2021-01-01');
+	/**
+	 * This is the formatted version of the date object above ("2020-01-01")
+	 */
+	let lastUpdateDateFormatted: string = '2021-01-01';
+	let lastUpdatePreviousDateFormatted: string = '2020-01-01';
+	/**
+	 * Let's set the initial dates based on exactly when BTS has last updated its data...
+	 */
+	async function setDates() {
+		lastUpdateDateBts = await Helper.getLastDate();
+		lastUpdateDateObject = new Date(lastUpdateDateBts.year, lastUpdateDateBts.month - 1, 1);
+		lastUpdatePreviousDateObject = new Date(
+			lastUpdateDateBts.year - 1,
+			lastUpdateDateBts.month - 1,
+			1
+		);
+		lastUpdateDateFormatted = Helper.dateFormatGenerator(lastUpdateDateObject);
+		lastUpdatePreviousDateFormatted = Helper.dateFormatGenerator(lastUpdatePreviousDateObject);
+	}
+	/**
+	 * Get Total Trade Value
+	 * This function needs to be updated with caching implemented
+	 */
+	async function getTradeValue() {
+		/**
+		 * Translates port name to Trade Port Code - ("San Ysidro" -> 2404)
+		 */
+		let totalSum = 0;
+		let totalPreviousSum = 0;
+		const translationObject = {
+			'San Ysidro': 2404,
+			Andrade: 2502,
+			'Calexico East': 2507,
+			'Calexico West': 2503,
+			Otay: 2506,
+			Tecate: 2505
+		};
+		for (let port of selectedPortNames) {
+			let startDate = startDateLuxon;
+			let endDate = endDateLuxon;
+			// DateTime endDate = DateTime.Today;
+for ( let dt = startDate; dt <= endDate; dt = dt.plus({months : 1})) 
+{
+	const query = `https://data.bts.gov/resource/ku5b-t97n.json?$$app_token=wUg7QFry0UMh97sXi8iM7I3UX&$limit=100000&year=${dt.year}&month=${dt.month}&depe=${translationObject[port]}`;
+			const data = await (await fetch(query)).json();
+			console.log(data);
+			const sum = data.reduce((accumulator: any, object: { value: any }) => {
+				return accumulator + Number(object.value);
+			}, 0);
+			console.log(sum);
+			totalSum += sum;
+			/**
+			 * Let's go back a year from when this query happened for some comparison
+			 */
+			const previousQuery = `https://data.bts.gov/resource/ku5b-t97n.json?$$app_token=wUg7QFry0UMh97sXi8iM7I3UX&$limit=100000&year=${
+				CurrentDate.year - 1
+			}&depe=${translationObject[port]}`;
+			const previousData = await (await fetch(previousQuery)).json();
+			const previousSum = previousData.reduce((accumulator: any, object: { value: any }) => {
+				return accumulator + Number(object.value);
+			}, 0);
+			console.log(sum);
+			totalPreviousSum += previousSum;
+}
+		}
 
-	/**
-	 * This is the current date
-	 */
-	let currentDateFormatted = Helper.dateFormatGenerator(CurrentDateObject);
-	/**
-	 * This is the date a year ago relative to the current date
-	 */
-	let pastDateFormatted = Helper.dateFormatGenerator(PreviousDateObject);
+		totalTrade = {
+			currentTrade: totalSum,
+			percentChange: Helper.calculatePercentDifference(totalSum, totalPreviousSum)
+		};
+	}
 
 	/*************************** PORT SELECTION  ****************************/
 	/**
@@ -438,6 +505,11 @@ import { element } from 'svelte/internal';
 				Object.keys(PORTS).find((key) => PORTS[key][0] === portNum)!
 			];
 		}
+		/**
+		 * If the ports are updated, these functions need to be called
+		 */
+		getBtsGroup(mergedObject);
+		setLastUpdate();
 	}
 	/**
 	 * Set last update on wait times column. Eg. 75 minutes - Last update: Today at 10:00 am.
@@ -453,8 +525,8 @@ import { element } from 'svelte/internal';
 			 * If there's more than one port, set it to San Ysidro
 			 */
 			port = [250401];
-			selectedWaitTimePortName = "San Ysidro"
-		};
+			selectedWaitTimePortName = 'San Ysidro';
+		}
 		selectedWaitTimePortName = selectedPortNames[0];
 		let waitTimeClass = new waitTimes(port[0]);
 
@@ -474,14 +546,11 @@ import { element } from 'svelte/internal';
 		}
 	}
 	let isOpen = false;
-	function handleUpdate(event) {
-		isOpen = event.detail.isOpen;
-	}
 </script>
 
 <div class="responsiveHeight">
 	<Navbar class="h-100" color="dark" style="background-color: #C7203B !important;" dark expand="md">
-		<NavbarBrand style="position: absolute; left: 50%;  transform: translateX(-50%);" href="/">
+		<NavbarBrand style="position: absolute; left: 5%;  transform: translateX(-20%);" href="/">
 			<div class="bg-red">
 				<img
 					src="/images/smartbordercoalition-logo-white.png"
@@ -491,6 +560,9 @@ import { element } from 'svelte/internal';
 					height="64"
 				/>
 			</div></NavbarBrand
+		>
+		<NavbarBrand style="position: absolute; left: 50%;  transform: translateX(-50%);" href="/">
+			<h1>Border Dashboard</h1></NavbarBrand
 		>
 		<NavbarToggler on:click={() => (isOpen = !isOpen)} />
 
@@ -554,7 +626,9 @@ import { element } from 'svelte/internal';
 				<h5 class="my-0 me-2">Date Selector:</h5>
 				<!-- <input class="w-50  h-50 text-center" style="border: none; " id="dateRange" /> -->
 				<!-- <input class="" id="dateRange"> -->
-				<input id="dateCalendar" on:click={() => openCalendar()}/>
+				<input id="dateCalendarStart" class="p-0 m-0" on:click={() => openCalendar(true)} />
+				to
+				<input id="dateCalendarEnd" class="p-0 m-0" on:click={() => openCalendar(false)} />
 				<!-- <Flatpickr {options} bind:value bind:formattedValue on:change={handleChange} name="date" /> -->
 			</div>
 		</NavbarBrand>
@@ -564,8 +638,7 @@ import { element } from 'svelte/internal';
 	class="card mx-auto my-2"
 	style="width: 18rem;background: rgb(0,242,96);
 background: linear-gradient(90deg, rgba(0,242,96,1) 0%, rgba(5,117,230,1) 100%); border: none;"
->
-</div>
+/>
 <!-- Crossing of goods, people, wait times-->
 <div class="container mt-3" style="height: 100vh; overflow: visible;">
 	<div class="row d-flex justify-content-start" style="height: 75vh; overflow: visible;">
@@ -578,17 +651,15 @@ background: linear-gradient(90deg, rgba(0,242,96,1) 0%, rgba(5,117,230,1) 100%);
 				<div class="card my-2" style="border: none;">
 					<div class="card-body p-0">
 						<div class="d-inline-flex container-fluid justify-content-between">
-							<div class="w-25">
+							<div class="w-50">
 								<h6 class="my-0">
-									From {startDateLuxon.toFormat('LLL dd yyyy')} to {endDateLuxon.toFormat(
-										'LLL dd yyyy'
-									)}
+									<b>{startDateLuxon.toFormat('LLL, yyyy')} to {endDateLuxon.toFormat('LLL, yyyy')}</b>
 								</h6>
 							</div>
-							<div class="w-25">
+							<div class="w-50">
 								<h6 class="my-0 text-end">
-									Compared to {previousStartDateLuxon.toFormat('LLL dd yyyy')} to {previousEndDateLuxon.toFormat(
-										'LLL dd yyyy'
+									Compared to {previousStartDateLuxon.toFormat('LLL, yyyy')} to {previousEndDateLuxon.toFormat(
+										'LLL, yyyy'
 									)}
 								</h6>
 							</div>
@@ -599,39 +670,109 @@ background: linear-gradient(90deg, rgba(0,242,96,1) 0%, rgba(5,117,230,1) 100%);
 					<div class="card-body">
 						<div class="d-flex justify-content-between">
 							<div class="d-flex flex-column">
-								<h3 >
+								<h3>
 									{Helper.numberWithCommas(btsObject.Pedestrians.currentCount)}
 								</h3>
 								<p class="card-text">PEDESTRIANS</p>
 							</div>
-							<!-- <i
-							class="fa fa-angle-double-up float-right fa-xl "
-							style="color: green;"
-							aria-hidden="true"
-						/> -->
-						<div class="d-flex d-inline-flex align-items-center">									<i
-							class="fa fa-angle-double-up float-right fa-xl "
-							style="color: green;"
-							aria-hidden="true"
-						/>{btsObject.Pedestrians.percentChange}%</div>
-							<!-- <h5 class="p-0 m-0 text-center">
-								{#if btsObject.Pedestrians.percentChange < 0}
-									 <i
+							<div class="d-flex d-inline-flex align-items-center">
+								<h4 class="p-0 m-0">
+									{#if btsObject.Pedestrians.percentChange < 0}
+									<i
 										class="fa fa-angle-double-down float-right fa-xl "
 										style="color: red;"
 										aria-hidden="true"
-									/> 
+									/>
 									{btsObject.Pedestrians.percentChange}%
 								{:else}
+									<i
+										class="fa fa-angle-double-up float-right fa-xl "
+										style="color: green;"
+										aria-hidden="true"
+									/>
 									{btsObject.Pedestrians.percentChange}%
 								{/if}
-							</h5> -->
+								</h4>
+							</div>
 						</div>
-
-						
 					</div>
 				</div>
 				<div class="card my-2" style="border: none;">
+					<div class="card-body">
+						<div class="d-flex justify-content-between">
+							<div class="d-flex flex-column">
+								<h3>
+									{Helper.numberWithCommas(btsObject.Vehicles.currentCount)}
+								</h3>
+								<div class="d-flex d-inline-flex align-items-center">
+									<p class="card-text py-0 pe-1 m-0">VEHICLES  </p>
+									<i class="fa-solid fa-circle-info" id={`Vehicles`} style="color: black" /><Tooltip
+										target={`Vehicles`}
+										placement="right"
+										>Total Vehicles includes Personal Vehicles, Buses, and Trains crossed</Tooltip
+									>
+								</div>
+							</div>
+							<div class="d-flex d-inline-flex align-items-center">
+								<h4 class="p-0 m-0">
+									{#if btsObject.Vehicles.percentChange < 0}
+									<i
+										class="fa fa-angle-double-down float-right fa-xl "
+										style="color: red;"
+										aria-hidden="true"
+									/>
+									{btsObject.Vehicles.percentChange}%
+								{:else}
+									<i
+										class="fa fa-angle-double-up float-right fa-xl "
+										style="color: green;"
+										aria-hidden="true"
+									/>
+									{btsObject.Vehicles.percentChange}%
+								{/if}
+								</h4>
+							</div>
+						</div>
+					</div>
+				</div>
+				<div class="card my-2" style="border: none;">
+					<div class="card-body">
+						<div class="d-flex justify-content-between">
+							<div class="d-flex flex-column">
+								<h3>
+									{Helper.numberWithCommas(btsObject.Passengers.currentCount)}
+								</h3>
+								<div class="d-flex d-inline-flex align-items-center">
+									<p class="card-text py-0 pe-1 m-0">PASSENGERS</p>
+									<i class="fa-solid fa-circle-info" id={`Passengers`} style="color: black" />
+										<Tooltip target={`Passengers`} placement="right"
+											>Total Passengers includes Passengers in Personal Vehicles, Buses, and Trains crossed</Tooltip
+										>
+								</div>
+							</div>
+							<div class="d-flex d-inline-flex align-items-center m-0 p-0">
+								<h4 class="p-0 m-0">
+									{#if btsObject.Passengers.percentChange < 0}
+									<i
+										class="fa fa-angle-double-down float-right fa-xl "
+										style="color: red;"
+										aria-hidden="true"
+									/>
+									{btsObject.Passengers.percentChange}%
+								{:else}
+									<i
+										class="fa fa-angle-double-up float-right fa-xl "
+										style="color: green;"
+										aria-hidden="true"
+									/>
+									{btsObject.Passengers.percentChange}%
+								{/if}
+								</h4>
+							</div>
+						</div>
+					</div>
+				</div>
+				<!-- <div class="card my-2" style="border: none;">
 					<div class="card-body">
 						<h3 class="card-title">
 							{Helper.numberWithCommas(btsObject.Vehicles.currentCount)}
@@ -661,8 +802,8 @@ background: linear-gradient(90deg, rgba(0,242,96,1) 0%, rgba(5,117,230,1) 100%);
 							>Total Vehicles includes Personal Vehicles, Buses, and Trains crossed</Tooltip
 						>
 					</div>
-				</div>
-				<div class="card my-2" style="border: none;">
+				</div> -->
+				<!-- <div class="card my-2" style="border: none;">
 					<div class="card-body">
 						<h3 class="card-title">
 							{Helper.numberWithCommas(btsObject.Passengers.currentCount)}
@@ -696,7 +837,7 @@ background: linear-gradient(90deg, rgba(0,242,96,1) 0%, rgba(5,117,230,1) 100%);
 							>Total Passengers includes Passengers in Personal Vehicles, Buses, and Trains crossed</Tooltip
 						>
 					</div>
-				</div>
+				</div> -->
 				<div class="card-footer text-muted" style="font-size: 0.7rem;">
 					https://data.bts.gov/Research-and-Statistics/Border-Crossing-Entry-Data/keg4-3bc2/data
 				</div>
@@ -709,40 +850,79 @@ background: linear-gradient(90deg, rgba(0,242,96,1) 0%, rgba(5,117,230,1) 100%);
 					<h1 class="text-white">Crossing of Goods</h1>
 				</div>
 				<div class="card my-2" style="border: none;">
-					<div class="card-body">
-						<div class="d-inline-flex align-items-center">
-							<div class="card-title mx-2 my-0">
-								<h4 class="my-0">Dates Selected:</h4>
+					<div class="card-body p-0">
+						<div class="d-inline-flex container-fluid justify-content-between">
+							<div class="w-50">
+								<h6 class="my-0">
+									{startDateLuxon.toFormat('LLL, yyyy')} to {endDateLuxon.toFormat('LLL, yyyy')}
+								</h6>
 							</div>
-							<h6 class="my-0">
-								{startDateLuxon.toFormat('LLL dd yyyy')} to {endDateLuxon.toFormat('LLL dd yyyy')}
-							</h6>
+							<div class="w-50">
+								<h6 class="my-0 text-end">
+									Compared to {previousStartDateLuxon.toFormat('LLL, yyyy')} to {previousEndDateLuxon.toFormat(
+										'LLL, yyyy'
+									)}
+								</h6>
+							</div>
+						</div>
+					</div>
+				</div>
+				<div class="card my-2" style="border: none;">
+					<div class="card-body">
+						<div class="d-flex justify-content-between">
+							<div class="d-flex flex-column">
+								<h3>
+									{Helper.numberWithCommas(btsObject.Trucks.currentCount)}
+								</h3>
+								<div class="d-flex d-inline-flex align-items-center">
+									<p class="card-text py-0 pe-1 m-0">TRUCKS</p>
+								</div>
+							</div>
+							<div class="d-flex d-inline-flex align-items-center m-0 p-0">
+								<h4 class="p-0 m-0">
+									{#if btsObject.Trucks.percentChange < 0}
+									<i
+										class="fa fa-angle-double-down float-right fa-xl "
+										style="color: red;"
+										aria-hidden="true"
+									/>
+									{btsObject.Trucks.percentChange}%
+								{:else}
+									<i
+										class="fa fa-angle-double-up float-right fa-xl "
+										style="color: green;"
+										aria-hidden="true"
+									/>
+									{btsObject.Trucks.percentChange}%
+								{/if}
+								</h4>
+							</div>
 						</div>
 					</div>
 				</div>
 				<div class="card my-2" style="border: none;">
 					<div class="card-body">
 						<h3 class="card-title">
-							{Helper.numberWithCommas(btsObject.Trucks.currentCount)}
+							{(totalTrade.currentTrade)}
 						</h3>
 						<h5 class="text-end">
-							{#if btsObject.Trucks.percentChange < 0}
+							{#if totalTrade.percentChange < 0}
 								<i
 									class="fa fa-angle-double-down float-right fa-xl "
 									style="color: red;"
 									aria-hidden="true"
 								/>
-								{btsObject.Trucks.percentChange}%
+								{totalTrade.percentChange}%
 							{:else}
 								<i
 									class="fa fa-angle-double-up float-right fa-xl "
 									style="color: green;"
 									aria-hidden="true"
 								/>
-								{btsObject.Trucks.percentChange}%
+								{totalTrade.percentChange}%
 							{/if}
 						</h5>
-						<p class="card-text">TRUCKS</p>
+						<p class="card-text">Total Trade Volume</p>
 					</div>
 				</div>
 				<div class="card-footer text-muted" style="font-size: 0.7rem;">
@@ -766,54 +946,60 @@ background: linear-gradient(90deg, rgba(0,242,96,1) 0%, rgba(5,117,230,1) 100%);
 					</div>
 				</div>
 				{#each waitTimesObj.found as laneFound}
-					<div class="card my-2" style="border: none;">
-						<div class="card-body">
-							<h3 class="card-title">{laneFound.delay} minutes</h3>
-							<h5 class="text-end">
-								{#if laneFound.percentChange < 0}
+				<div class="card my-2" style="border: none;">
+					<div class="card-body">
+						<div class="d-flex justify-content-between">
+							<div class="d-flex flex-column">
+								<h3>
+									{laneFound.delay} minutes
+								</h3>
+								<div class="d-flex d-inline-flex align-items-center">
+									<p class="card-text py-0 pe-1 m-0">{selectedWaitTimePortName} {laneFound.laneName} </p>
+								</div>
+							</div>
+							<div class="d-flex d-inline-flex align-items-center m-0 p-0">
+								<h6 class="p-0 m-0">
+									{#if laneFound.percentChange < 0}
 									<i
 										class="fa fa-angle-double-down float-right fa-xl "
 										style="color: red;"
 										aria-hidden="true"
 									/>
-									{laneFound.percentChange}%
-									<i
-										class="fa-solid fa-circle-info"
-										id={`${laneFound.laneName}_Tag`}
-										style="color: black"
-									/>
+									{laneFound.percentChange}%							<i
+									class="fa-solid fa-circle-info"
+									id={`${laneFound.laneName}_Tag`}
+									style="color: black"
+								/>
 									<Tooltip target={`${laneFound.laneName}_Tag`} placement="right"
-										>This percentage is calculated by comparing the current wait time to the average
-										wait time for the {laneFound.laneName}
-										lane on a {CurrentDate.weekdayLong}
-										at {CurrentDate.toFormat('h:00 a')}</Tooltip
-									>
+									>This percentage is calculated by comparing the current wait time to the average
+									wait time for the {laneFound.laneName}
+									lane on a {CurrentDate.weekdayLong}
+									at {CurrentDate.toFormat('h:00 a')}</Tooltip
+								>
 								{:else}
 									<i
 										class="fa fa-angle-double-up float-right fa-xl "
 										style="color: green;"
 										aria-hidden="true"
 									/>
-									{laneFound.percentChange}%
-									<i
-										class="fa-solid fa-circle-info "
-										id={`${laneFound.laneName}_Tag`}
-										style="color: black"
-									/>
-									<Tooltip
-										style="z-index: 1000"
-										target={`${laneFound.laneName}_Tag`}
-										placement="right"
-										>This percentage is calculated by comparing the current wait time to the average
-										wait time for the {laneFound.laneName}
-										lane on a {CurrentDate.weekdayLong}
-										at {CurrentDate.toFormat('h:00 a')}</Tooltip
-									>
+									{laneFound.percentChange}%							<i
+									class="fa-solid fa-circle-info"
+									id={`${laneFound.laneName}_Tag`}
+									style="color: black"
+								/>
+									<Tooltip target={`${laneFound.laneName}_Tag`} placement="right"
+									>This percentage is calculated by comparing the current wait time to the average
+									wait time for the {laneFound.laneName}
+									lane on a {CurrentDate.weekdayLong}
+									at {CurrentDate.toFormat('h:00 a')}</Tooltip
+								>
 								{/if}
-							</h5>
-							<p class="card-text">{selectedWaitTimePortName} {laneFound.laneName} Traffic Lane</p>
+								</h6>
+							</div>
 						</div>
 					</div>
+				</div>
+				
 				{/each}
 				{#each waitTimesObj.missing as laneMissing}
 					<div class="card my-2" style="border: none;">
@@ -844,13 +1030,13 @@ background: linear-gradient(90deg, rgba(0,242,96,1) 0%, rgba(5,117,230,1) 100%);
 	@import url('https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.1.1/css/all.min.css');
 	@import url('https://fonts.googleapis.com/css2?family=Raleway&display=swap');
 	.bg-purple {
-		background-color: #10376F
+		background-color: #10376f;
 	}
 	.bg-green {
-		background-color:#10376F
+		background-color: #10376f;
 	}
 	.bg-blue {
-		background-color: #10376F
+		background-color: #10376f;
 	}
 	@media only screen and (min-width: 750px) {
 		.responsiveHeight {
