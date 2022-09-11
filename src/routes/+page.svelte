@@ -30,10 +30,8 @@
 		Navbar,
 		Nav
 	} from 'sveltestrap';
-	import Select from 'svelte-select';
 	import type { Instance } from 'flatpickr/dist/types/instance';
-	import { element } from 'svelte/internal';
-	import { page } from '$app/stores';
+// import { Terser } from 'vite';
 
 	/*************************** CONSTANTS AND GLOBAL VARIABLE DEFINING ****************************/
 	/**
@@ -108,7 +106,7 @@
 		{ label: 'Calexico East', value: PORTS['Calexico East'] },
 		{ label: 'San Ysidro', value: PORTS['San Ysidro'] },
 		{ label: 'Otay Mesa', value: PORTS['Otay Mesa'] },
-		{ label: 'Cali Baja', value: CALIPORTS }
+		{ label: 'Cali-Baja', value: CALIPORTS }
 	];
 
 	const PASSENGERS = ['Personal Vehicle Passengers', 'Train Passengers', 'Bus Passengers'];
@@ -279,6 +277,7 @@
 			]
 		});
 		calendarEnd = Flatpickr(elementFinish, {
+			
 			onValueUpdate: (selectedDates, dateStr, instance) => {
 				if (valueEnd != dateStr) {
 					console.log(dateStr);
@@ -296,10 +295,9 @@
 			defaultDate: endDate,
 			plugins: [
 				monthSelectPlugin({
-					shorthand: false, //defaults to false
+					
 					dateFormat: 'Y-m-d', //defaults to "F Y"
 					altFormat: 'F j, Y',
-
 					theme: 'dark' // defaults to "light"
 				})
 			]
@@ -319,6 +317,8 @@
 		}, 5);
 	}
 	/*************************** END DATE SELECTOR ****************************/
+
+	/*************************** DOM FUNCTIONS HANDLING BTS DATA ****************************/
 	/**
 	 * So this function takes in an object of whatever subgroups I want to calculate for - Eg. If I want to calculate for the pedestrians and a subset of measures called "Vehicles",
 	 *
@@ -376,8 +376,6 @@
 		btsObject = objectToBeReturned;
 	}
 
-	/*************************** DOM FUNCTIONS HANDLING BTS DATA ****************************/
-
 	/**
 	 
 	 * @property Possible Measures - ["Pedestrians", "Trains", "Buses", "Personal Vehicle Passengers", "Personal Vehicles", "Trucks", "Train Passengers", "Bus Passengers"]
@@ -397,6 +395,10 @@
 		let calculatedCrossingsObject = await instance.calculateCrossings(measures);
 		return calculatedCrossingsObject;
 	}
+
+	/*************************** END DOM  FUNCTIONS HANDLING BTS DATA ****************************/
+
+	/*************************** DOM FUNCTIONS HANDLING BTS DATA ****************************/
 	/**
 	 * When was the BTS data last updated - this is the date formatted
 	 */
@@ -428,6 +430,10 @@
 		lastUpdateDateFormatted = Helper.dateFormatGenerator(lastUpdateDateObject);
 		lastUpdatePreviousDateFormatted = Helper.dateFormatGenerator(lastUpdatePreviousDateObject);
 	}
+	/*************************** END DATES GENERATION SECTION  ****************************/
+
+	/*************************** TRADE VALUE SECTION  ****************************/
+
 	/**
 	 * Get Total Trade Value
 	 * This function needs to be updated with caching implemented
@@ -449,30 +455,31 @@
 		for (let port of selectedPortNames) {
 			let startDate = startDateLuxon;
 			let endDate = endDateLuxon;
-			// DateTime endDate = DateTime.Today;
-for ( let dt = startDate; dt <= endDate; dt = dt.plus({months : 1})) 
-{
-	const query = `https://data.bts.gov/resource/ku5b-t97n.json?$$app_token=wUg7QFry0UMh97sXi8iM7I3UX&$limit=100000&year=${dt.year}&month=${dt.month}&depe=${translationObject[port]}`;
-			const data = await (await fetch(query)).json();
-			console.log(data);
-			const sum = data.reduce((accumulator: any, object: { value: any }) => {
-				return accumulator + Number(object.value);
-			}, 0);
-			console.log(sum);
-			totalSum += sum;
 			/**
-			 * Let's go back a year from when this query happened for some comparison
+			 * There's no date between in this api :(, we must loop through every month from start date to end date
 			 */
-			const previousQuery = `https://data.bts.gov/resource/ku5b-t97n.json?$$app_token=wUg7QFry0UMh97sXi8iM7I3UX&$limit=100000&year=${
-				CurrentDate.year - 1
-			}&depe=${translationObject[port]}`;
-			const previousData = await (await fetch(previousQuery)).json();
-			const previousSum = previousData.reduce((accumulator: any, object: { value: any }) => {
-				return accumulator + Number(object.value);
-			}, 0);
-			console.log(sum);
-			totalPreviousSum += previousSum;
-}
+			for (let dt = startDate; dt <= endDate; dt = dt.plus({ months: 1 })) {
+				const query = `https://data.bts.gov/resource/ku5b-t97n.json?$$app_token=wUg7QFry0UMh97sXi8iM7I3UX&$limit=100000&year=${dt.year}&month=${dt.month}&depe=${translationObject[port]}`;
+				const data = await (await fetch(query)).json();
+				console.log(data);
+				const sum = data.reduce((accumulator: any, object: { value: any }) => {
+					return accumulator + Number(object.value);
+				}, 0);
+				console.log(sum);
+				totalSum += sum;
+				/**
+				 * Let's go back a year from when this query happened for some comparison
+				 */
+				const previousQuery = `https://data.bts.gov/resource/ku5b-t97n.json?$$app_token=wUg7QFry0UMh97sXi8iM7I3UX&$limit=100000&year=${
+					dt.year - 1
+				}&month=${dt.month}&depe=${translationObject[port]}`;
+				const previousData = await (await fetch(previousQuery)).json();
+				const previousSum = previousData.reduce((accumulator: any, object: { value: any }) => {
+					return accumulator + Number(object.value);
+				}, 0);
+				console.log(sum);
+				totalPreviousSum += previousSum;
+			}
 		}
 
 		totalTrade = {
@@ -480,6 +487,8 @@ for ( let dt = startDate; dt <= endDate; dt = dt.plus({months : 1}))
 			percentChange: Helper.calculatePercentDifference(totalSum, totalPreviousSum)
 		};
 	}
+
+	/*************************** END TRADE VALUE SECTION  ****************************/
 
 	/*************************** PORT SELECTION  ****************************/
 	/**
@@ -562,7 +571,7 @@ for ( let dt = startDate; dt <= endDate; dt = dt.plus({months : 1}))
 			</div></NavbarBrand
 		>
 		<NavbarBrand style="position: absolute; left: 50%;  transform: translateX(-50%);" href="/">
-			<h1>Border Dashboard</h1></NavbarBrand
+			<h1><b>Border Dashboard</b></h1></NavbarBrand
 		>
 		<NavbarToggler on:click={() => (isOpen = !isOpen)} />
 
@@ -653,14 +662,15 @@ background: linear-gradient(90deg, rgba(0,242,96,1) 0%, rgba(5,117,230,1) 100%);
 						<div class="d-inline-flex container-fluid justify-content-between">
 							<div class="w-50">
 								<h6 class="my-0">
-									<b>{startDateLuxon.toFormat('LLL, yyyy')} to {endDateLuxon.toFormat('LLL, yyyy')}</b>
+									<b>{startDateLuxon.toFormat('LLL, yyyy')}</b> -
+									<b>{endDateLuxon.toFormat('LLL, yyyy')}</b>
 								</h6>
 							</div>
 							<div class="w-50">
-								<h6 class="my-0 text-end">
-									Compared to {previousStartDateLuxon.toFormat('LLL, yyyy')} to {previousEndDateLuxon.toFormat(
+								<h6 class="my-0 text-center">
+									Compared to <b>{previousStartDateLuxon.toFormat('LLL, yyyy')}</b> - <b>{previousEndDateLuxon.toFormat(
 										'LLL, yyyy'
-									)}
+									)}</b>
 								</h6>
 							</div>
 						</div>
@@ -678,20 +688,20 @@ background: linear-gradient(90deg, rgba(0,242,96,1) 0%, rgba(5,117,230,1) 100%);
 							<div class="d-flex d-inline-flex align-items-center">
 								<h4 class="p-0 m-0">
 									{#if btsObject.Pedestrians.percentChange < 0}
-									<i
-										class="fa fa-angle-double-down float-right fa-xl "
-										style="color: red;"
-										aria-hidden="true"
-									/>
-									{btsObject.Pedestrians.percentChange}%
-								{:else}
-									<i
-										class="fa fa-angle-double-up float-right fa-xl "
-										style="color: green;"
-										aria-hidden="true"
-									/>
-									{btsObject.Pedestrians.percentChange}%
-								{/if}
+										<i
+											class="fa fa-angle-double-down float-right fa-xl "
+											style="color: red;"
+											aria-hidden="true"
+										/>
+										{btsObject.Pedestrians.percentChange}%
+									{:else}
+										<i
+											class="fa fa-angle-double-up float-right fa-xl "
+											style="color: green;"
+											aria-hidden="true"
+										/>
+										{btsObject.Pedestrians.percentChange}%
+									{/if}
 								</h4>
 							</div>
 						</div>
@@ -705,7 +715,7 @@ background: linear-gradient(90deg, rgba(0,242,96,1) 0%, rgba(5,117,230,1) 100%);
 									{Helper.numberWithCommas(btsObject.Vehicles.currentCount)}
 								</h3>
 								<div class="d-flex d-inline-flex align-items-center">
-									<p class="card-text py-0 pe-1 m-0">VEHICLES  </p>
+									<p class="card-text py-0 pe-1 m-0">VEHICLES</p>
 									<i class="fa-solid fa-circle-info" id={`Vehicles`} style="color: black" /><Tooltip
 										target={`Vehicles`}
 										placement="right"
@@ -716,20 +726,20 @@ background: linear-gradient(90deg, rgba(0,242,96,1) 0%, rgba(5,117,230,1) 100%);
 							<div class="d-flex d-inline-flex align-items-center">
 								<h4 class="p-0 m-0">
 									{#if btsObject.Vehicles.percentChange < 0}
-									<i
-										class="fa fa-angle-double-down float-right fa-xl "
-										style="color: red;"
-										aria-hidden="true"
-									/>
-									{btsObject.Vehicles.percentChange}%
-								{:else}
-									<i
-										class="fa fa-angle-double-up float-right fa-xl "
-										style="color: green;"
-										aria-hidden="true"
-									/>
-									{btsObject.Vehicles.percentChange}%
-								{/if}
+										<i
+											class="fa fa-angle-double-down float-right fa-xl "
+											style="color: red;"
+											aria-hidden="true"
+										/>
+										{btsObject.Vehicles.percentChange}%
+									{:else}
+										<i
+											class="fa fa-angle-double-up float-right fa-xl "
+											style="color: green;"
+											aria-hidden="true"
+										/>
+										{btsObject.Vehicles.percentChange}%
+									{/if}
 								</h4>
 							</div>
 						</div>
@@ -745,99 +755,34 @@ background: linear-gradient(90deg, rgba(0,242,96,1) 0%, rgba(5,117,230,1) 100%);
 								<div class="d-flex d-inline-flex align-items-center">
 									<p class="card-text py-0 pe-1 m-0">PASSENGERS</p>
 									<i class="fa-solid fa-circle-info" id={`Passengers`} style="color: black" />
-										<Tooltip target={`Passengers`} placement="right"
-											>Total Passengers includes Passengers in Personal Vehicles, Buses, and Trains crossed</Tooltip
-										>
+									<Tooltip target={`Passengers`} placement="right"
+										>Total Passengers includes Passengers in Personal Vehicles, Buses, and Trains
+										crossed</Tooltip
+									>
 								</div>
 							</div>
 							<div class="d-flex d-inline-flex align-items-center m-0 p-0">
 								<h4 class="p-0 m-0">
 									{#if btsObject.Passengers.percentChange < 0}
-									<i
-										class="fa fa-angle-double-down float-right fa-xl "
-										style="color: red;"
-										aria-hidden="true"
-									/>
-									{btsObject.Passengers.percentChange}%
-								{:else}
-									<i
-										class="fa fa-angle-double-up float-right fa-xl "
-										style="color: green;"
-										aria-hidden="true"
-									/>
-									{btsObject.Passengers.percentChange}%
-								{/if}
+										<i
+											class="fa fa-angle-double-down float-right fa-xl "
+											style="color: red;"
+											aria-hidden="true"
+										/>
+										{btsObject.Passengers.percentChange}%
+									{:else}
+										<i
+											class="fa fa-angle-double-up float-right fa-xl "
+											style="color: green;"
+											aria-hidden="true"
+										/>
+										{btsObject.Passengers.percentChange}%
+									{/if}
 								</h4>
 							</div>
 						</div>
 					</div>
 				</div>
-				<!-- <div class="card my-2" style="border: none;">
-					<div class="card-body">
-						<h3 class="card-title">
-							{Helper.numberWithCommas(btsObject.Vehicles.currentCount)}
-						</h3>
-						<h5 class="text-end">
-							{#if btsObject.Vehicles.percentChange < 0}
-								<i
-									class="fa fa-angle-double-down float-right fa-xl "
-									style="color: red;"
-									aria-hidden="true"
-								/>
-								{btsObject.Vehicles.percentChange}%
-							{:else}
-								<i
-									class="fa fa-angle-double-up float-right fa-xl "
-									style="color: green;"
-									aria-hidden="true"
-								/>
-								{btsObject.Vehicles.percentChange}%
-							{/if}
-						</h5>
-						<p class="card-text">
-							VEHICLES <i class="fa-solid fa-circle-info" id={`Vehicles`} style="color: black" />
-						</p>
-
-						<Tooltip target={`Vehicles`} placement="right"
-							>Total Vehicles includes Personal Vehicles, Buses, and Trains crossed</Tooltip
-						>
-					</div>
-				</div> -->
-				<!-- <div class="card my-2" style="border: none;">
-					<div class="card-body">
-						<h3 class="card-title">
-							{Helper.numberWithCommas(btsObject.Passengers.currentCount)}
-						</h3>
-						<h5 class="text-end">
-							{#if btsObject.Passengers.percentChange < 0}
-								<i
-									class="fa fa-angle-double-down float-right fa-xl "
-									style="color: red;"
-									aria-hidden="true"
-								/>
-								{btsObject.Passengers.percentChange}%
-							{:else}
-								<i
-									class="fa fa-angle-double-up float-right fa-xl "
-									style="color: green;"
-									aria-hidden="true"
-								/>
-								{btsObject.Passengers.percentChange}%
-							{/if}
-						</h5>
-						<p class="card-text">
-							PASSENGERS <i
-								class="fa-solid fa-circle-info"
-								id={`Passengers`}
-								style="color: black"
-							/>
-						</p>
-
-						<Tooltip target={`Passengers`} placement="right"
-							>Total Passengers includes Passengers in Personal Vehicles, Buses, and Trains crossed</Tooltip
-						>
-					</div>
-				</div> -->
 				<div class="card-footer text-muted" style="font-size: 0.7rem;">
 					https://data.bts.gov/Research-and-Statistics/Border-Crossing-Entry-Data/keg4-3bc2/data
 				</div>
@@ -854,14 +799,15 @@ background: linear-gradient(90deg, rgba(0,242,96,1) 0%, rgba(5,117,230,1) 100%);
 						<div class="d-inline-flex container-fluid justify-content-between">
 							<div class="w-50">
 								<h6 class="my-0">
-									{startDateLuxon.toFormat('LLL, yyyy')} to {endDateLuxon.toFormat('LLL, yyyy')}
+									<b>{startDateLuxon.toFormat('LLL, yyyy')}</b> -
+									<b>{endDateLuxon.toFormat('LLL, yyyy')}</b>
 								</h6>
 							</div>
 							<div class="w-50">
-								<h6 class="my-0 text-end">
-									Compared to {previousStartDateLuxon.toFormat('LLL, yyyy')} to {previousEndDateLuxon.toFormat(
+								<h6 class="my-0 text-center">
+									Compared to <b>{previousStartDateLuxon.toFormat('LLL, yyyy')}</b> - <b>{previousEndDateLuxon.toFormat(
 										'LLL, yyyy'
-									)}
+									)}</b>
 								</h6>
 							</div>
 						</div>
@@ -881,20 +827,20 @@ background: linear-gradient(90deg, rgba(0,242,96,1) 0%, rgba(5,117,230,1) 100%);
 							<div class="d-flex d-inline-flex align-items-center m-0 p-0">
 								<h4 class="p-0 m-0">
 									{#if btsObject.Trucks.percentChange < 0}
-									<i
-										class="fa fa-angle-double-down float-right fa-xl "
-										style="color: red;"
-										aria-hidden="true"
-									/>
-									{btsObject.Trucks.percentChange}%
-								{:else}
-									<i
-										class="fa fa-angle-double-up float-right fa-xl "
-										style="color: green;"
-										aria-hidden="true"
-									/>
-									{btsObject.Trucks.percentChange}%
-								{/if}
+										<i
+											class="fa fa-angle-double-down float-right fa-xl "
+											style="color: red;"
+											aria-hidden="true"
+										/>
+										{btsObject.Trucks.percentChange}%
+									{:else}
+										<i
+											class="fa fa-angle-double-up float-right fa-xl "
+											style="color: green;"
+											aria-hidden="true"
+										/>
+										{btsObject.Trucks.percentChange}%
+									{/if}
 								</h4>
 							</div>
 						</div>
@@ -902,31 +848,44 @@ background: linear-gradient(90deg, rgba(0,242,96,1) 0%, rgba(5,117,230,1) 100%);
 				</div>
 				<div class="card my-2" style="border: none;">
 					<div class="card-body">
-						<h3 class="card-title">
-							{(totalTrade.currentTrade)}
-						</h3>
-						<h5 class="text-end">
-							{#if totalTrade.percentChange < 0}
-								<i
-									class="fa fa-angle-double-down float-right fa-xl "
-									style="color: red;"
-									aria-hidden="true"
-								/>
-								{totalTrade.percentChange}%
-							{:else}
-								<i
-									class="fa fa-angle-double-up float-right fa-xl "
-									style="color: green;"
-									aria-hidden="true"
-								/>
-								{totalTrade.percentChange}%
-							{/if}
-						</h5>
-						<p class="card-text">Total Trade Volume</p>
+						<div class="d-flex justify-content-between">
+							<div class="d-flex flex-column">
+								<h3>
+									{totalTrade.currentTrade}
+								</h3>
+								<div class="d-flex d-inline-flex align-items-center">
+									<p class="card-text py-0 pe-1 m-0">TOTAL TRADE</p>
+								</div>
+							</div>
+							<div class="d-flex d-inline-flex align-items-center m-0 p-0">
+								<h4 class="p-0 m-0">
+									{#if totalTrade.percentChange < 0}
+										<i
+											class="fa fa-angle-double-down float-right fa-xl "
+											style="color: red;"
+											aria-hidden="true"
+										/>
+										{totalTrade.percentChange}%
+									{:else}
+										<i
+											class="fa fa-angle-double-up float-right fa-xl "
+											style="color: green;"
+											aria-hidden="true"
+										/>
+										{totalTrade.percentChange}%
+									{/if}
+								</h4>
+							</div>
+						</div>
 					</div>
 				</div>
 				<div class="card-footer text-muted" style="font-size: 0.7rem;">
-					https://data.bts.gov/Research-and-Statistics/Border-Crossing-Entry-Data/keg4-3bc2/data
+					<div class="d-flex flex-column">
+						<div class="p-2 bd-highlight">https://data.bts.gov/Research-and-Statistics/Border-Crossing-Entry-Data/keg4-3bc2/data</div>
+						<div class="p-2 bd-highlight">https://data.bts.gov/resource/ku5b-t97n.json?</div>
+						
+						
+					</div>
 				</div>
 			</div>
 		</div>
@@ -939,67 +898,71 @@ background: linear-gradient(90deg, rgba(0,242,96,1) 0%, rgba(5,117,230,1) 100%);
 				</div>
 				<div class="card my-2" style="border: none;">
 					<div class="card-body">
-						<h5 class="card-title">Last Updated: {waitTimesObj.lastUpdateTime}</h5>
+						<h5 class="card-title text-center">Last Updated: <b>{waitTimesObj.lastUpdateTime}</b></h5>
 
 						<!-- <p class="card-text">With supporting text below as a natural lead-in to additional content.</p> -->
 						<!-- <a href="#" class="btn btn-primary">Go somewhere</a> -->
 					</div>
 				</div>
 				{#each waitTimesObj.found as laneFound}
-				<div class="card my-2" style="border: none;">
-					<div class="card-body">
-						<div class="d-flex justify-content-between">
-							<div class="d-flex flex-column">
-								<h3>
-									{laneFound.delay} minutes
-								</h3>
-								<div class="d-flex d-inline-flex align-items-center">
-									<p class="card-text py-0 pe-1 m-0">{selectedWaitTimePortName} {laneFound.laneName} </p>
+					<div class="card my-2" style="border: none;">
+						<div class="card-body">
+							<div class="d-flex justify-content-between">
+								<div class="d-flex flex-column">
+									<h3>
+										{laneFound.delay} minutes
+									</h3>
+									<div class="d-flex d-inline-flex align-items-center">
+										<p class="card-text py-0 pe-1 m-0">
+											{selectedWaitTimePortName}
+											{laneFound.laneName}
+										</p>
+									</div>
 								</div>
-							</div>
-							<div class="d-flex d-inline-flex align-items-center m-0 p-0">
-								<h6 class="p-0 m-0">
-									{#if laneFound.percentChange < 0}
-									<i
-										class="fa fa-angle-double-down float-right fa-xl "
-										style="color: red;"
-										aria-hidden="true"
-									/>
-									{laneFound.percentChange}%							<i
-									class="fa-solid fa-circle-info"
-									id={`${laneFound.laneName}_Tag`}
-									style="color: black"
-								/>
-									<Tooltip target={`${laneFound.laneName}_Tag`} placement="right"
-									>This percentage is calculated by comparing the current wait time to the average
-									wait time for the {laneFound.laneName}
-									lane on a {CurrentDate.weekdayLong}
-									at {CurrentDate.toFormat('h:00 a')}</Tooltip
-								>
-								{:else}
-									<i
-										class="fa fa-angle-double-up float-right fa-xl "
-										style="color: green;"
-										aria-hidden="true"
-									/>
-									{laneFound.percentChange}%							<i
-									class="fa-solid fa-circle-info"
-									id={`${laneFound.laneName}_Tag`}
-									style="color: black"
-								/>
-									<Tooltip target={`${laneFound.laneName}_Tag`} placement="right"
-									>This percentage is calculated by comparing the current wait time to the average
-									wait time for the {laneFound.laneName}
-									lane on a {CurrentDate.weekdayLong}
-									at {CurrentDate.toFormat('h:00 a')}</Tooltip
-								>
-								{/if}
-								</h6>
+								<div class="d-flex d-inline-flex align-items-center m-0 p-0">
+									<h6 class="p-0 m-0">
+										{#if laneFound.percentChange < 0}
+											<i
+												class="fa fa-angle-double-down float-right fa-xl "
+												style="color: red;"
+												aria-hidden="true"
+											/>
+											{laneFound.percentChange}%
+											<i
+												class="fa-solid fa-circle-info"
+												id={`${laneFound.laneName}_Tag`}
+												style="color: black"
+											/>
+											<Tooltip target={`${laneFound.laneName}_Tag`} placement="right"
+												>This percentage is calculated by comparing the current wait time to the
+												average wait time for the {laneFound.laneName}
+												lane on a {CurrentDate.weekdayLong}
+												at {CurrentDate.toFormat('h:00 a')}</Tooltip
+											>
+										{:else}
+											<i
+												class="fa fa-angle-double-up float-right fa-xl "
+												style="color: green;"
+												aria-hidden="true"
+											/>
+											{laneFound.percentChange}%
+											<i
+												class="fa-solid fa-circle-info"
+												id={`${laneFound.laneName}_Tag`}
+												style="color: black"
+											/>
+											<Tooltip target={`${laneFound.laneName}_Tag`} placement="right"
+												>This percentage is calculated by comparing the current wait time to the
+												average wait time for the {laneFound.laneName}
+												lane on a {CurrentDate.weekdayLong}
+												at {CurrentDate.toFormat('h:00 a')}</Tooltip
+											>
+										{/if}
+									</h6>
+								</div>
 							</div>
 						</div>
 					</div>
-				</div>
-				
 				{/each}
 				{#each waitTimesObj.missing as laneMissing}
 					<div class="card my-2" style="border: none;">
@@ -1028,7 +991,7 @@ background: linear-gradient(90deg, rgba(0,242,96,1) 0%, rgba(5,117,230,1) 100%);
 <style>
 	@import url('https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css');
 	@import url('https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.1.1/css/all.min.css');
-	@import url('https://fonts.googleapis.com/css2?family=Raleway&display=swap');
+	@import url('https://fonts.googleapis.com/css2?family=Raleway:wght@400;700&display=swap');
 	.bg-purple {
 		background-color: #10376f;
 	}
