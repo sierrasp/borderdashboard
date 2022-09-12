@@ -32,6 +32,7 @@
 		Nav
 	} from 'sveltestrap';
 	import type { Instance } from 'flatpickr/dist/types/instance';
+import { query_selector_all } from 'svelte/internal';
 // import { Terser } from 'vite';
 
 	/*************************** CONSTANTS AND GLOBAL VARIABLE DEFINING ****************************/
@@ -244,7 +245,6 @@
 		await setLastUpdate();
 		console.log('bts group called', selectedPorts, pageLoaded);
 		await getBtsGroup(mergedObject);
-		getTradeValue();
 		// await setDates();
 	});
 	// });
@@ -340,6 +340,10 @@
 		 * Let's wait for our dates to be generated - Remember, these aren't the current dates but dates generated off when BTS has last updated their data
 		 */
 		await setDates();
+		/**
+		 * Ok now that our dates have been generated, let's get at the data collection
+		*/
+		await getTradeValue();
 
 		// ok the wait is over
 		let objectToBeReturned: { [key: string]: { currentCount: number; percentChange: number } } = {};
@@ -467,7 +471,6 @@
 			for (let dt = startDate; dt <= endDate; dt = dt.plus({ months: 1 })) {
 				const query = `https://data.bts.gov/resource/ku5b-t97n.json?$$app_token=wUg7QFry0UMh97sXi8iM7I3UX&$limit=100000&year=${dt.year}&month=${dt.month}&depe=${translationObject[port]}`;
 				const data = await (await fetch(query)).json();
-				console.log(data);
 				const sum = data.reduce((accumulator: any, object: { value: any }) => {
 					return accumulator + Number(object.value);
 				}, 0);
@@ -492,6 +495,7 @@
 			currentTrade: totalSum,
 			percentChange: Helper.calculatePercentDifference(totalSum, totalPreviousSum)
 		};
+		console.log(totalTrade)
 	}
 
 	/*************************** END TRADE VALUE SECTION  ****************************/

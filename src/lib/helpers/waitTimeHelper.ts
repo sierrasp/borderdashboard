@@ -9,7 +9,6 @@ export default class waitTimes {
         this.portNum = portNum;
     };
     async getCurrentWaitTimes() {
-        console.log("HELLOO?>>");
         /**
          * I need to identify which ports are closed
          */
@@ -40,8 +39,10 @@ export default class waitTimes {
             console.log(lastWaitTimeURI);
             const lastWaitTimes = await this.getMostRecentDates(lastWaitTimeURI);
             console.log(lastWaitTimes);
-            const averageWaitTimes : { found: { avg: string, lane_type: number }[], missing: number[] } = await (await fetch(averageWaitTimeURI)).json()
-            const newDate = DateTime.fromISO(`${lastWaitTimes[0].daterecorded}`, { zone: 'America/Los_Angeles' });
+            const averageWaitTimes : { found: { avg: string, lane_type: number }[], missing: number[] } = await (await fetch(averageWaitTimeURI)).json();
+            console.log(`${lastWaitTimes[0].daterecorded}`);
+            const newDate = DateTime.fromISO(`${lastWaitTimes[0].daterecorded}`, { zone: 'America/Tijuana' });
+            console.log(newDate);
             console.log(newDate);
             const currentDate = DateTime.local().setZone("America/Tijuana");
             let returnString = ``;

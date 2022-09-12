@@ -81,7 +81,6 @@ export class Helper {
         });
         // const maxDate=new Date(Math.max.apply(null,dates));
         const maxDate = new Date(Math.max(...dates));
-        console.log(maxDate)
         // return maxDate;
         return DateTime.fromJSDate(maxDate).setZone("America/Tijuana").plus({ months: 1 });
 
@@ -95,7 +94,6 @@ export class Helper {
         const luxonDate = DateTime.fromFormat(date, 'yyyy-MM-dd');
         const slicedMonth = ('0' + luxonDate.month).slice(-2);
         const slicedDay = ('0' + luxonDate.day).slice(-2);
-        console.log(luxonDate);
         return `${luxonDate.year - 1}-${slicedMonth}-${slicedDay}`
     };
     static calculatePercentDifference(newNumber: number, oldNumber: number) {
@@ -147,7 +145,6 @@ export class Helper {
             measureObject[measure] = measureSum;
 
         });;
-        console.log(measureObject);
         return measureObject;
     }
     store(data: IBtsData[]) {
@@ -179,7 +176,6 @@ export class Helper {
     }
     checkStored() {
         const value = localStorage.getItem(this.storageID);
-        console.log(value);
         if (value != null) {
             return true;
         }
