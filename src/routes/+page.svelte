@@ -11,7 +11,7 @@
 	import monthSelectPlugin from 'flatpickr/dist/plugins/monthSelect/index.js';
 	import 'flatpickr/dist/flatpickr.css';
 	import 'flatpickr/dist/plugins/monthSelect/style.css';
-	import { Moon } from 'svelte-loading-spinners'
+	import { Moon } from 'svelte-loading-spinners';
 
 	/**
 	 * Svelte Strap doesn't work with svelte kit, so I had to use this workaround - npm i git+https://github.com/laxadev/sveltestrap.git
@@ -32,8 +32,8 @@
 		Nav
 	} from 'sveltestrap';
 	import type { Instance } from 'flatpickr/dist/types/instance';
-import { query_selector_all } from 'svelte/internal';
-// import { Terser } from 'vite';
+	import { query_selector_all } from 'svelte/internal';
+	// import { Terser } from 'vite';
 
 	/*************************** CONSTANTS AND GLOBAL VARIABLE DEFINING ****************************/
 	/**
@@ -233,7 +233,7 @@ import { query_selector_all } from 'svelte/internal';
 	$: previousStartDate = Helper.calculatePreviousDate(startDate);
 	$: previousStartDateLuxon = DateTime.fromSQL(previousStartDate);
 	$: previousEndDateLuxon = DateTime.fromSQL(previousEndDate);
-	
+
 	let btsLoaded = false;
 	$: btsLoaded;
 
@@ -259,10 +259,7 @@ import { query_selector_all } from 'svelte/internal';
 		let elementFinish = document.getElementById('dateCalendarEnd')!;
 		calendarStart = Flatpickr(elementStart, {
 			onValueUpdate: (selectedDates, dateStr, instance) => {
-				if (valueStart != dateStr)
-					// onValueUpdate fired even if no change happend
-					startDate = dateStr;
-				getBtsGroup(mergedObject);
+				if (valueStart != dateStr) startDate = dateStr;
 				console.log('change', dateStr);
 
 				valueStart = dateStr;
@@ -281,12 +278,12 @@ import { query_selector_all } from 'svelte/internal';
 			]
 		});
 		calendarEnd = Flatpickr(elementFinish, {
-			minDate : startDate,
+			minDate: startDate,
 			onValueUpdate: (selectedDates, dateStr, instance) => {
 				if (valueEnd != dateStr) {
 					console.log(dateStr);
 					endDate = dateStr;
-					getBtsGroup(mergedObject);
+
 					// conversionDateEnd = DateTime.fromFormat(dateStr, 'yyyy-MM-d');
 				}
 				// onValueUpdate fired even if no change happend
@@ -299,7 +296,6 @@ import { query_selector_all } from 'svelte/internal';
 			defaultDate: endDate,
 			plugins: [
 				monthSelectPlugin({
-					
 					dateFormat: 'Y-m-d', //defaults to "F Y"
 					altFormat: 'F j, Y',
 					theme: 'dark' // defaults to "light"
@@ -319,6 +315,9 @@ import { query_selector_all } from 'svelte/internal';
 				calendarEnd.open();
 			}
 		}, 5);
+	}
+	function submitCalendar() {
+		getBtsGroup(mergedObject);
 	}
 	/*************************** END DATE SELECTOR ****************************/
 
@@ -342,7 +341,7 @@ import { query_selector_all } from 'svelte/internal';
 		await setDates();
 		/**
 		 * Ok now that our dates have been generated, let's get at the data collection
-		*/
+		 */
 		await getTradeValue();
 
 		// ok the wait is over
@@ -495,7 +494,7 @@ import { query_selector_all } from 'svelte/internal';
 			currentTrade: totalSum,
 			percentChange: Helper.calculatePercentDifference(totalSum, totalPreviousSum)
 		};
-		console.log(totalTrade)
+		console.log(totalTrade);
 	}
 
 	/*************************** END TRADE VALUE SECTION  ****************************/
@@ -648,6 +647,8 @@ import { query_selector_all } from 'svelte/internal';
 				<input id="dateCalendarStart" class="p-0 m-0" on:click={() => openCalendar(true)} />
 				to
 				<input id="dateCalendarEnd" class="p-0 m-0" on:click={() => openCalendar(false)} />
+
+				<button class=" ms-2 btn " style="background-color: #10376f; color: white" on:click={() => submitCalendar()}>Submit</button>
 				<!-- <Flatpickr {options} bind:value bind:formattedValue on:change={handleChange} name="date" /> -->
 			</div>
 		</NavbarBrand>
@@ -679,20 +680,19 @@ background: linear-gradient(90deg, rgba(0,242,96,1) 0%, rgba(5,117,230,1) 100%);
 							<div class="w-50">
 								<h6 class="my-0 text-center">
 									<div class="d-flex flex-column">
-										Compared to 
-										
+										Compared to
+
 										<!-- <div class="d-inline-flex align-items-center text-end justify-content-between "> -->
-											<p class="text-end"><b>{previousStartDateLuxon.toFormat('LLL, yyyy')}</b> - <b>{previousEndDateLuxon.toFormat(
-												'LLL, yyyy'
-											)}</b></p>
+										<p class="text-end">
+											<b>{previousStartDateLuxon.toFormat('LLL, yyyy')}</b> -
+											<b>{previousEndDateLuxon.toFormat('LLL, yyyy')}</b>
+										</p>
 										<!-- </div> -->
 									</div>
-									
 								</h6>
 							</div>
 						</div>
 					</div>
-					
 				</div>
 				<div class="card my-2" style="border: none;">
 					<div class="card-body">
@@ -700,36 +700,35 @@ background: linear-gradient(90deg, rgba(0,242,96,1) 0%, rgba(5,117,230,1) 100%);
 							<div class="d-flex flex-column">
 								<h3>
 									{#if !btsLoaded}
-									<Moon size="60" color="#c7203b" unit="px" duration="1s"></Moon>
-
+										<Moon size="60" color="#c7203b" unit="px" duration="1s" />
 									{:else}
-									{Helper.numberWithCommas(btsObject.Pedestrians.currentCount)}
+										{Helper.numberWithCommas(btsObject.Pedestrians.currentCount)}
 									{/if}
 								</h3>
 								<p class="card-text">PEDESTRIANS</p>
 							</div>
 							{#if !btsLoaded}
-							<Moon size="60" color="#c7203b" unit="px" duration="1s"></Moon>
+								<Moon size="60" color="#c7203b" unit="px" duration="1s" />
 							{:else}
-							<div class="d-flex d-inline-flex align-items-center">
-								<h4 class="p-0 m-0">
-									{#if btsObject.Pedestrians.percentChange < 0}
-										<i
-											class="fa fa-angle-double-down float-right fa-xl "
-											style="color: red;"
-											aria-hidden="true"
-										/>
-										{btsObject.Pedestrians.percentChange}%
-									{:else}
-										<i
-											class="fa fa-angle-double-up float-right fa-xl "
-											style="color: green;"
-											aria-hidden="true"
-										/>
-										{btsObject.Pedestrians.percentChange}%
-									{/if}
-								</h4>
-							</div>
+								<div class="d-flex d-inline-flex align-items-center">
+									<h4 class="p-0 m-0">
+										{#if btsObject.Pedestrians.percentChange < 0}
+											<i
+												class="fa fa-angle-double-down float-right fa-xl "
+												style="color: red;"
+												aria-hidden="true"
+											/>
+											{btsObject.Pedestrians.percentChange}%
+										{:else}
+											<i
+												class="fa fa-angle-double-up float-right fa-xl "
+												style="color: green;"
+												aria-hidden="true"
+											/>
+											{btsObject.Pedestrians.percentChange}%
+										{/if}
+									</h4>
+								</div>
 							{/if}
 						</div>
 					</div>
@@ -740,10 +739,9 @@ background: linear-gradient(90deg, rgba(0,242,96,1) 0%, rgba(5,117,230,1) 100%);
 							<div class="d-flex flex-column">
 								<h3>
 									{#if !btsLoaded}
-									<Moon size="60" color="#c7203b" unit="px" duration="1s"></Moon>
-
+										<Moon size="60" color="#c7203b" unit="px" duration="1s" />
 									{:else}
-									{Helper.numberWithCommas(btsObject.Vehicles.currentCount)}
+										{Helper.numberWithCommas(btsObject.Vehicles.currentCount)}
 									{/if}
 								</h3>
 								<div class="d-flex d-inline-flex align-items-center">
@@ -756,27 +754,27 @@ background: linear-gradient(90deg, rgba(0,242,96,1) 0%, rgba(5,117,230,1) 100%);
 								</div>
 							</div>
 							{#if !btsLoaded}
-							<Moon size="60" color="#c7203b" unit="px" duration="1s"></Moon>
+								<Moon size="60" color="#c7203b" unit="px" duration="1s" />
 							{:else}
-							<div class="d-flex d-inline-flex align-items-center">
-								<h4 class="p-0 m-0">
-									{#if btsObject.Vehicles.percentChange < 0}
-										<i
-											class="fa fa-angle-double-down float-right fa-xl "
-											style="color: red;"
-											aria-hidden="true"
-										/>
-										{btsObject.Vehicles.percentChange}%
-									{:else}
-										<i
-											class="fa fa-angle-double-up float-right fa-xl "
-											style="color: green;"
-											aria-hidden="true"
-										/>
-										{btsObject.Vehicles.percentChange}%
-									{/if}
-								</h4>
-							</div>
+								<div class="d-flex d-inline-flex align-items-center">
+									<h4 class="p-0 m-0">
+										{#if btsObject.Vehicles.percentChange < 0}
+											<i
+												class="fa fa-angle-double-down float-right fa-xl "
+												style="color: red;"
+												aria-hidden="true"
+											/>
+											{btsObject.Vehicles.percentChange}%
+										{:else}
+											<i
+												class="fa fa-angle-double-up float-right fa-xl "
+												style="color: green;"
+												aria-hidden="true"
+											/>
+											{btsObject.Vehicles.percentChange}%
+										{/if}
+									</h4>
+								</div>
 							{/if}
 						</div>
 					</div>
@@ -787,10 +785,9 @@ background: linear-gradient(90deg, rgba(0,242,96,1) 0%, rgba(5,117,230,1) 100%);
 							<div class="d-flex flex-column">
 								<h3>
 									{#if !btsLoaded}
-									<Moon size="60" color="#c7203b" unit="px" duration="1s"></Moon>
-
+										<Moon size="60" color="#c7203b" unit="px" duration="1s" />
 									{:else}
-									{Helper.numberWithCommas(btsObject.Passengers.currentCount)}
+										{Helper.numberWithCommas(btsObject.Passengers.currentCount)}
 									{/if}
 								</h3>
 								<div class="d-flex d-inline-flex align-items-center">
@@ -802,28 +799,28 @@ background: linear-gradient(90deg, rgba(0,242,96,1) 0%, rgba(5,117,230,1) 100%);
 									>
 								</div>
 							</div>
-														{#if !btsLoaded}
-							<Moon size="60" color="#c7203b" unit="px" duration="1s"></Moon>
+							{#if !btsLoaded}
+								<Moon size="60" color="#c7203b" unit="px" duration="1s" />
 							{:else}
-							<div class="d-flex d-inline-flex align-items-center m-0 p-0">
-								<h4 class="p-0 m-0">
-									{#if btsObject.Passengers.percentChange < 0}
-										<i
-											class="fa fa-angle-double-down float-right fa-xl "
-											style="color: red;"
-											aria-hidden="true"
-										/>
-										{btsObject.Passengers.percentChange}%
-									{:else}
-										<i
-											class="fa fa-angle-double-up float-right fa-xl "
-											style="color: green;"
-											aria-hidden="true"
-										/>
-										{btsObject.Passengers.percentChange}%
-									{/if}
-								</h4>
-							</div>
+								<div class="d-flex d-inline-flex align-items-center m-0 p-0">
+									<h4 class="p-0 m-0">
+										{#if btsObject.Passengers.percentChange < 0}
+											<i
+												class="fa fa-angle-double-down float-right fa-xl "
+												style="color: red;"
+												aria-hidden="true"
+											/>
+											{btsObject.Passengers.percentChange}%
+										{:else}
+											<i
+												class="fa fa-angle-double-up float-right fa-xl "
+												style="color: green;"
+												aria-hidden="true"
+											/>
+											{btsObject.Passengers.percentChange}%
+										{/if}
+									</h4>
+								</div>
 							{/if}
 						</div>
 					</div>
@@ -851,15 +848,15 @@ background: linear-gradient(90deg, rgba(0,242,96,1) 0%, rgba(5,117,230,1) 100%);
 							<div class="w-50">
 								<h6 class="my-0 text-center">
 									<div class="d-flex flex-column">
-										Compared to 
-										
+										Compared to
+
 										<!-- <div class="d-inline-flex align-items-center text-end justify-content-between "> -->
-											<p class="text-end"><b>{previousStartDateLuxon.toFormat('LLL, yyyy')}</b> - <b>{previousEndDateLuxon.toFormat(
-												'LLL, yyyy'
-											)}</b></p>
+										<p class="text-end">
+											<b>{previousStartDateLuxon.toFormat('LLL, yyyy')}</b> -
+											<b>{previousEndDateLuxon.toFormat('LLL, yyyy')}</b>
+										</p>
 										<!-- </div> -->
 									</div>
-									
 								</h6>
 							</div>
 						</div>
@@ -872,10 +869,9 @@ background: linear-gradient(90deg, rgba(0,242,96,1) 0%, rgba(5,117,230,1) 100%);
 							<div class="d-flex flex-column">
 								<h3>
 									{#if !btsLoaded}
-									<Moon size="60" color="#c7203b" unit="px" duration="1s"></Moon>
-
+										<Moon size="60" color="#c7203b" unit="px" duration="1s" />
 									{:else}
-									{Helper.numberWithCommas(btsObject.Trucks.currentCount)}
+										{Helper.numberWithCommas(btsObject.Trucks.currentCount)}
 									{/if}
 								</h3>
 								<div class="d-flex d-inline-flex align-items-center">
@@ -883,27 +879,27 @@ background: linear-gradient(90deg, rgba(0,242,96,1) 0%, rgba(5,117,230,1) 100%);
 								</div>
 							</div>
 							{#if !btsLoaded}
-							<Moon size="60" color="#c7203b" unit="px" duration="1s"></Moon>
+								<Moon size="60" color="#c7203b" unit="px" duration="1s" />
 							{:else}
-							<div class="d-flex d-inline-flex align-items-center m-0 p-0">
-								<h4 class="p-0 m-0">
-									{#if btsObject.Trucks.percentChange < 0}
-										<i
-											class="fa fa-angle-double-down float-right fa-xl "
-											style="color: red;"
-											aria-hidden="true"
-										/>
-										{btsObject.Trucks.percentChange}%
-									{:else}
-										<i
-											class="fa fa-angle-double-up float-right fa-xl "
-											style="color: green;"
-											aria-hidden="true"
-										/>
-										{btsObject.Trucks.percentChange}%
-									{/if}
-								</h4>
-							</div>
+								<div class="d-flex d-inline-flex align-items-center m-0 p-0">
+									<h4 class="p-0 m-0">
+										{#if btsObject.Trucks.percentChange < 0}
+											<i
+												class="fa fa-angle-double-down float-right fa-xl "
+												style="color: red;"
+												aria-hidden="true"
+											/>
+											{btsObject.Trucks.percentChange}%
+										{:else}
+											<i
+												class="fa fa-angle-double-up float-right fa-xl "
+												style="color: green;"
+												aria-hidden="true"
+											/>
+											{btsObject.Trucks.percentChange}%
+										{/if}
+									</h4>
+								</div>
 							{/if}
 						</div>
 					</div>
@@ -914,10 +910,9 @@ background: linear-gradient(90deg, rgba(0,242,96,1) 0%, rgba(5,117,230,1) 100%);
 							<div class="d-flex flex-column">
 								<h3>
 									{#if !btsLoaded}
-									<Moon size="60" color="#c7203b" unit="px" duration="1s"></Moon>
-
+										<Moon size="60" color="#c7203b" unit="px" duration="1s" />
 									{:else}
-									${Helper.numberWithCommas(Math.round((totalTrade.currentTrade / 1000000)))} M
+										${Helper.numberWithCommas(Math.round(totalTrade.currentTrade / 1000000))} M
 									{/if}
 								</h3>
 								<div class="d-flex d-inline-flex align-items-center">
@@ -925,37 +920,37 @@ background: linear-gradient(90deg, rgba(0,242,96,1) 0%, rgba(5,117,230,1) 100%);
 								</div>
 							</div>
 							{#if !btsLoaded}
-							<Moon size="60" color="#c7203b" unit="px" duration="1s"></Moon>
+								<Moon size="60" color="#c7203b" unit="px" duration="1s" />
 							{:else}
-							<div class="d-flex d-inline-flex align-items-center m-0 p-0">
-								<h4 class="p-0 m-0">
-									{#if totalTrade.percentChange < 0}
-										<i
-											class="fa fa-angle-double-down float-right fa-xl "
-											style="color: red;"
-											aria-hidden="true"
-										/>
-										{totalTrade.percentChange}%
-									{:else}
-										<i
-											class="fa fa-angle-double-up float-right fa-xl "
-											style="color: green;"
-											aria-hidden="true"
-										/>
-										{totalTrade.percentChange}%
-									{/if}
-								</h4>
-							</div>
+								<div class="d-flex d-inline-flex align-items-center m-0 p-0">
+									<h4 class="p-0 m-0">
+										{#if totalTrade.percentChange < 0}
+											<i
+												class="fa fa-angle-double-down float-right fa-xl "
+												style="color: red;"
+												aria-hidden="true"
+											/>
+											{totalTrade.percentChange}%
+										{:else}
+											<i
+												class="fa fa-angle-double-up float-right fa-xl "
+												style="color: green;"
+												aria-hidden="true"
+											/>
+											{totalTrade.percentChange}%
+										{/if}
+									</h4>
+								</div>
 							{/if}
 						</div>
 					</div>
 				</div>
 				<div class="card-footer text-muted" style="font-size: 0.7rem;">
 					<div class="d-flex flex-column">
-						<div class="p-2 bd-highlight">https://data.bts.gov/Research-and-Statistics/Border-Crossing-Entry-Data/keg4-3bc2/data</div>
+						<div class="p-2 bd-highlight">
+							https://data.bts.gov/Research-and-Statistics/Border-Crossing-Entry-Data/keg4-3bc2/data
+						</div>
 						<div class="p-2 bd-highlight">https://data.bts.gov/resource/ku5b-t97n.json?</div>
-						
-						
 					</div>
 				</div>
 			</div>
@@ -969,7 +964,9 @@ background: linear-gradient(90deg, rgba(0,242,96,1) 0%, rgba(5,117,230,1) 100%);
 				</div>
 				<div class="card my-2" style="border: none;">
 					<div class="card-body">
-						<h5 class="card-title text-center">Last Updated: <b>{waitTimesObj.lastUpdateTime}</b></h5>
+						<h5 class="card-title text-center">
+							Last Updated: <b>{waitTimesObj.lastUpdateTime}</b>
+						</h5>
 
 						<!-- <p class="card-text">With supporting text below as a natural lead-in to additional content.</p> -->
 						<!-- <a href="#" class="btn btn-primary">Go somewhere</a> -->
