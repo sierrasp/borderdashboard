@@ -41,10 +41,10 @@ export default class waitTimes {
             console.log(lastWaitTimes);
             const averageWaitTimes : { found: { avg: string, lane_type: number }[], missing: number[] } = await (await fetch(averageWaitTimeURI)).json();
             console.log(`${lastWaitTimes[0].daterecorded}`);
-            const newDate = DateTime.fromISO(`${lastWaitTimes[0].daterecorded}`, { zone: 'America/Tijuana' });
+            const newDate = DateTime.fromISO(`${lastWaitTimes[0].daterecorded}`);
             console.log(newDate);
             console.log(newDate);
-            const currentDate = DateTime.local().setZone("America/Tijuana");
+            const currentDate = DateTime.local();
             let returnString = ``;
             if (currentDate.day == newDate.day) {
                 returnString = `Today at ${this.toAPM(newDate)}`;
