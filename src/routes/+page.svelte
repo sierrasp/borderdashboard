@@ -458,17 +458,19 @@
 			Andrade: 2502,
 			'Calexico East': 2507,
 			'Calexico West': 2503,
-			Otay: 2506,
+			'Otay Mesa': 2506,
 			Tecate: 2505
 		};
 		for (let port of selectedPortNames) {
 			let startDate = startDateLuxon;
 			let endDate = endDateLuxon;
+			console.log(port)
 			/**
 			 * There's no date between in this api :(, we must loop through every month from start date to end date
 			 */
 			for (let dt = startDate; dt <= endDate; dt = dt.plus({ months: 1 })) {
 				const query = `https://data.bts.gov/resource/ku5b-t97n.json?$$app_token=wUg7QFry0UMh97sXi8iM7I3UX&$limit=100000&year=${dt.year}&month=${dt.month}&depe=${translationObject[port]}`;
+				console.log(query);
 				const data = await (await fetch(query)).json();
 				const sum = data.reduce((accumulator: any, object: { value: any }) => {
 					return accumulator + Number(object.value);
@@ -580,7 +582,7 @@
 			</div></NavbarBrand
 		>
 		<NavbarBrand style="position: absolute; left: 50%;  transform: translateX(-50%);" href="/">
-			<h1><b>Border Dashboard</b></h1></NavbarBrand
+			<h1>Cali-Baja Border Dashboard</h1></NavbarBrand
 		>
 		<NavbarToggler on:click={() => (isOpen = !isOpen)} />
 
@@ -666,7 +668,7 @@ background: linear-gradient(90deg, rgba(0,242,96,1) 0%, rgba(5,117,230,1) 100%);
 		<div class="col-lg-4">
 			<div class="card" style="">
 				<div class="card-header text-center bg-green ">
-					<h1 class="text-white">Crossing of People</h1>
+					<h2 class="text-white">Crossing of People</h2>
 				</div>
 				<div class="card my-2" style="border: none;">
 					<div class="card-body p-0">
@@ -834,7 +836,7 @@ background: linear-gradient(90deg, rgba(0,242,96,1) 0%, rgba(5,117,230,1) 100%);
 		<div class="col-lg-4">
 			<div class="card" style="overflow: visible;">
 				<div class="card-header text-center bg-blue ">
-					<h1 class="text-white">Crossing of Goods</h1>
+					<h2 class="text-white">Crossing of Goods</h2>
 				</div>
 				<div class="card my-2" style="border: none;">
 					<div class="card-body p-0">
@@ -960,7 +962,7 @@ background: linear-gradient(90deg, rgba(0,242,96,1) 0%, rgba(5,117,230,1) 100%);
 		<div class="col-lg-4" style="overflow: visible;">
 			<div class="card" style="	 overflow: visible;">
 				<div class="card-header text-center bg-purple ">
-					<h1 class="text-white">Current Wait Times</h1>
+					<h2 class="text-white">Current Wait Times</h2>
 				</div>
 				<div class="card my-2" style="border: none;">
 					<div class="card-body">
