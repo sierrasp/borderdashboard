@@ -11,6 +11,7 @@
 	import monthSelectPlugin from 'flatpickr/dist/plugins/monthSelect';
 	import 'flatpickr/dist/flatpickr.css';
 	import 'flatpickr/dist/plugins/monthSelect/style.css';
+	import { Moon } from 'svelte-loading-spinners'
 
 	/**
 	 * Svelte Strap doesn't work with svelte kit, so I had to use this workaround - npm i git+https://github.com/laxadev/sveltestrap.git
@@ -231,6 +232,9 @@
 	$: previousStartDate = Helper.calculatePreviousDate(startDate);
 	$: previousStartDateLuxon = DateTime.fromSQL(previousStartDate);
 	$: previousEndDateLuxon = DateTime.fromSQL(previousEndDate);
+	
+	let btsLoaded = false;
+	$: btsLoaded;
 
 	/*************************** END DATES SEGMENT ****************************/
 
@@ -277,7 +281,7 @@
 			]
 		});
 		calendarEnd = Flatpickr(elementFinish, {
-			
+			minDate : startDate,
 			onValueUpdate: (selectedDates, dateStr, instance) => {
 				if (valueEnd != dateStr) {
 					console.log(dateStr);
@@ -327,6 +331,7 @@
 	 * @returns This updates the global btsObject variable with the count of each measure and the percent of change since the previous date calculated above
 	 */
 	async function getBtsGroup(obj: Record<string, string[]>) {
+		btsLoaded = false;
 		/**
 		 * This object will be sommething like -
 		 * 	"Vehicles" : {currentCount : 100000, percentChange : 10%}
@@ -374,6 +379,7 @@
 			console.log(objectToBeReturned);
 		}
 		btsObject = objectToBeReturned;
+		btsLoaded = true;
 	}
 
 	/**
@@ -668,23 +674,39 @@ background: linear-gradient(90deg, rgba(0,242,96,1) 0%, rgba(5,117,230,1) 100%);
 							</div>
 							<div class="w-50">
 								<h6 class="my-0 text-center">
-									Compared to <b>{previousStartDateLuxon.toFormat('LLL, yyyy')}</b> - <b>{previousEndDateLuxon.toFormat(
-										'LLL, yyyy'
-									)}</b>
+									<div class="d-flex flex-column">
+										Compared to 
+										
+										<!-- <div class="d-inline-flex align-items-center text-end justify-content-between "> -->
+											<p class="text-end"><b>{previousStartDateLuxon.toFormat('LLL, yyyy')}</b> - <b>{previousEndDateLuxon.toFormat(
+												'LLL, yyyy'
+											)}</b></p>
+										<!-- </div> -->
+									</div>
+									
 								</h6>
 							</div>
 						</div>
 					</div>
+					
 				</div>
 				<div class="card my-2" style="border: none;">
 					<div class="card-body">
 						<div class="d-flex justify-content-between">
 							<div class="d-flex flex-column">
 								<h3>
+									{#if !btsLoaded}
+									<Moon size="60" color="#c7203b" unit="px" duration="1s"></Moon>
+
+									{:else}
 									{Helper.numberWithCommas(btsObject.Pedestrians.currentCount)}
+									{/if}
 								</h3>
 								<p class="card-text">PEDESTRIANS</p>
 							</div>
+							{#if !btsLoaded}
+							<Moon size="60" color="#c7203b" unit="px" duration="1s"></Moon>
+							{:else}
 							<div class="d-flex d-inline-flex align-items-center">
 								<h4 class="p-0 m-0">
 									{#if btsObject.Pedestrians.percentChange < 0}
@@ -704,6 +726,7 @@ background: linear-gradient(90deg, rgba(0,242,96,1) 0%, rgba(5,117,230,1) 100%);
 									{/if}
 								</h4>
 							</div>
+							{/if}
 						</div>
 					</div>
 				</div>
@@ -712,7 +735,12 @@ background: linear-gradient(90deg, rgba(0,242,96,1) 0%, rgba(5,117,230,1) 100%);
 						<div class="d-flex justify-content-between">
 							<div class="d-flex flex-column">
 								<h3>
+									{#if !btsLoaded}
+									<Moon size="60" color="#c7203b" unit="px" duration="1s"></Moon>
+
+									{:else}
 									{Helper.numberWithCommas(btsObject.Vehicles.currentCount)}
+									{/if}
 								</h3>
 								<div class="d-flex d-inline-flex align-items-center">
 									<p class="card-text py-0 pe-1 m-0">VEHICLES</p>
@@ -723,6 +751,9 @@ background: linear-gradient(90deg, rgba(0,242,96,1) 0%, rgba(5,117,230,1) 100%);
 									>
 								</div>
 							</div>
+							{#if !btsLoaded}
+							<Moon size="60" color="#c7203b" unit="px" duration="1s"></Moon>
+							{:else}
 							<div class="d-flex d-inline-flex align-items-center">
 								<h4 class="p-0 m-0">
 									{#if btsObject.Vehicles.percentChange < 0}
@@ -742,6 +773,7 @@ background: linear-gradient(90deg, rgba(0,242,96,1) 0%, rgba(5,117,230,1) 100%);
 									{/if}
 								</h4>
 							</div>
+							{/if}
 						</div>
 					</div>
 				</div>
@@ -750,7 +782,12 @@ background: linear-gradient(90deg, rgba(0,242,96,1) 0%, rgba(5,117,230,1) 100%);
 						<div class="d-flex justify-content-between">
 							<div class="d-flex flex-column">
 								<h3>
+									{#if !btsLoaded}
+									<Moon size="60" color="#c7203b" unit="px" duration="1s"></Moon>
+
+									{:else}
 									{Helper.numberWithCommas(btsObject.Passengers.currentCount)}
+									{/if}
 								</h3>
 								<div class="d-flex d-inline-flex align-items-center">
 									<p class="card-text py-0 pe-1 m-0">PASSENGERS</p>
@@ -761,6 +798,9 @@ background: linear-gradient(90deg, rgba(0,242,96,1) 0%, rgba(5,117,230,1) 100%);
 									>
 								</div>
 							</div>
+														{#if !btsLoaded}
+							<Moon size="60" color="#c7203b" unit="px" duration="1s"></Moon>
+							{:else}
 							<div class="d-flex d-inline-flex align-items-center m-0 p-0">
 								<h4 class="p-0 m-0">
 									{#if btsObject.Passengers.percentChange < 0}
@@ -780,6 +820,7 @@ background: linear-gradient(90deg, rgba(0,242,96,1) 0%, rgba(5,117,230,1) 100%);
 									{/if}
 								</h4>
 							</div>
+							{/if}
 						</div>
 					</div>
 				</div>
@@ -805,25 +846,41 @@ background: linear-gradient(90deg, rgba(0,242,96,1) 0%, rgba(5,117,230,1) 100%);
 							</div>
 							<div class="w-50">
 								<h6 class="my-0 text-center">
-									Compared to <b>{previousStartDateLuxon.toFormat('LLL, yyyy')}</b> - <b>{previousEndDateLuxon.toFormat(
-										'LLL, yyyy'
-									)}</b>
+									<div class="d-flex flex-column">
+										Compared to 
+										
+										<!-- <div class="d-inline-flex align-items-center text-end justify-content-between "> -->
+											<p class="text-end"><b>{previousStartDateLuxon.toFormat('LLL, yyyy')}</b> - <b>{previousEndDateLuxon.toFormat(
+												'LLL, yyyy'
+											)}</b></p>
+										<!-- </div> -->
+									</div>
+									
 								</h6>
 							</div>
 						</div>
 					</div>
 				</div>
+				<!-- </div> -->
 				<div class="card my-2" style="border: none;">
 					<div class="card-body">
 						<div class="d-flex justify-content-between">
 							<div class="d-flex flex-column">
 								<h3>
+									{#if !btsLoaded}
+									<Moon size="60" color="#c7203b" unit="px" duration="1s"></Moon>
+
+									{:else}
 									{Helper.numberWithCommas(btsObject.Trucks.currentCount)}
+									{/if}
 								</h3>
 								<div class="d-flex d-inline-flex align-items-center">
 									<p class="card-text py-0 pe-1 m-0">TRUCKS</p>
 								</div>
 							</div>
+							{#if !btsLoaded}
+							<Moon size="60" color="#c7203b" unit="px" duration="1s"></Moon>
+							{:else}
 							<div class="d-flex d-inline-flex align-items-center m-0 p-0">
 								<h4 class="p-0 m-0">
 									{#if btsObject.Trucks.percentChange < 0}
@@ -843,6 +900,7 @@ background: linear-gradient(90deg, rgba(0,242,96,1) 0%, rgba(5,117,230,1) 100%);
 									{/if}
 								</h4>
 							</div>
+							{/if}
 						</div>
 					</div>
 				</div>
@@ -851,12 +909,20 @@ background: linear-gradient(90deg, rgba(0,242,96,1) 0%, rgba(5,117,230,1) 100%);
 						<div class="d-flex justify-content-between">
 							<div class="d-flex flex-column">
 								<h3>
-									{totalTrade.currentTrade}
+									{#if !btsLoaded}
+									<Moon size="60" color="#c7203b" unit="px" duration="1s"></Moon>
+
+									{:else}
+									${Helper.numberWithCommas(Math.round((totalTrade.currentTrade / 1000000)))} M
+									{/if}
 								</h3>
 								<div class="d-flex d-inline-flex align-items-center">
 									<p class="card-text py-0 pe-1 m-0">TOTAL TRADE</p>
 								</div>
 							</div>
+							{#if !btsLoaded}
+							<Moon size="60" color="#c7203b" unit="px" duration="1s"></Moon>
+							{:else}
 							<div class="d-flex d-inline-flex align-items-center m-0 p-0">
 								<h4 class="p-0 m-0">
 									{#if totalTrade.percentChange < 0}
@@ -876,6 +942,7 @@ background: linear-gradient(90deg, rgba(0,242,96,1) 0%, rgba(5,117,230,1) 100%);
 									{/if}
 								</h4>
 							</div>
+							{/if}
 						</div>
 					</div>
 				</div>

@@ -59,7 +59,7 @@ export class Helper {
      * @param day Eg. 1 - Using splice for any digits under 10, so don't worry about that
      * @returns A date string for class generation, Eg. "2019-01-01"
      */
-    static dateFormatGenerator(date : Date) {
+    static dateFormatGenerator(date: Date) {
 
         const year = date.getFullYear();
         const month = date.getMonth() + 1;
@@ -73,9 +73,9 @@ export class Helper {
  * @returns An object with current year, current month, and current day. Eg, {year : 2022, month : 9, day : 1}
  */
 
-    static  async getLastDate() {
-        const data : IBtsData[] = await (await fetch('https://data.bts.gov/id/keg4-3bc2.json?$limit=100000&$where=date%20between%20%272021-09-01T00:00:00.000%27%20and%20%272022-09-01T00:00:00.000%27&border=US-Mexico%20Border')).json();
-        let dates : any[] = [];
+    static async getLastDate() {
+        const data: IBtsData[] = await (await fetch('https://data.bts.gov/id/keg4-3bc2.json?$limit=100000&$where=date%20between%20%272021-09-01T00:00:00.000%27%20and%20%272022-09-01T00:00:00.000%27&border=US-Mexico%20Border')).json();
+        let dates: any[] = [];
         data.forEach(el => {
             dates = [...dates, new Date(el.date)]
         });
@@ -84,21 +84,21 @@ export class Helper {
         console.log(maxDate)
         // return maxDate;
         return DateTime.fromJSDate(maxDate).setZone("America/Tijuana").plus({ months: 1 });
-        
+
     };
     /**
      * 
      * @param date A formatted date string 
      * @returns A formatted date string with the year prior
      */
-    static calculatePreviousDate(date : string) {
+    static calculatePreviousDate(date: string) {
         const luxonDate = DateTime.fromFormat(date, 'yyyy-MM-dd');
         const slicedMonth = ('0' + luxonDate.month).slice(-2);
         const slicedDay = ('0' + luxonDate.day).slice(-2);
         console.log(luxonDate);
-        return `${luxonDate.year -1}-${slicedMonth}-${slicedDay}`
+        return `${luxonDate.year - 1}-${slicedMonth}-${slicedDay}`
     };
-    static calculatePercentDifference(newNumber : number, oldNumber : number) {
+    static calculatePercentDifference(newNumber: number, oldNumber: number) {
         return Math.round(((newNumber - oldNumber) / oldNumber) * 100);
     };
     /**
@@ -106,7 +106,7 @@ export class Helper {
      * @param x Number
      * @returns Number seperated by commas, Eg. 10000 => 10,000
      */
-    static numberWithCommas(x : number) {
+    static numberWithCommas(x: number) {
         return x.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
     };
     /**
@@ -152,10 +152,34 @@ export class Helper {
     }
     store(data: IBtsData[]) {
         const valueStringified = JSON.stringify(data);
-        localStorage.setItem(this.storageID, valueStringified);
+        try {
+            localStorage.setItem(this.storageID, valueStringified);
+        }
+        catch (err) {
+            if (this.isQuotaExceededError(err)) {
+                localStorage.clear();
+                localStorage.setItem(this.storageID, valueStringified);
+            }
+
+        }
+    }
+    isQuotaExceededError(err: unknown) {
+        return (
+            err instanceof DOMException &&
+            // everything except Firefox
+            (err.code === 22 ||
+                // Firefox
+                err.code === 1014 ||
+                // test name field too, because code might not be present
+                // everything except Firefox
+                err.name === "QuotaExceededError" ||
+                // Firefox
+                err.name === "NS_ERROR_DOM_QUOTA_REACHED")
+        );
     }
     checkStored() {
         const value = localStorage.getItem(this.storageID);
+        console.log(value);
         if (value != null) {
             return true;
         }

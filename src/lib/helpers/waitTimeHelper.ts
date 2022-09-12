@@ -42,6 +42,7 @@ export default class waitTimes {
             console.log(lastWaitTimes);
             const averageWaitTimes : { found: { avg: string, lane_type: number }[], missing: number[] } = await (await fetch(averageWaitTimeURI)).json()
             const newDate = DateTime.fromISO(`${lastWaitTimes[0].daterecorded}`, { zone: 'America/Los_Angeles' });
+            console.log(newDate);
             const currentDate = DateTime.local().setZone("America/Tijuana");
             let returnString = ``;
             if (currentDate.day == newDate.day) {
@@ -201,7 +202,7 @@ export default class waitTimes {
         // const readyLane = rows.filter(el => {
         //     return el.lane_type = 2;
         // });
-        const latestGeneralDate = generalLaneArr.reduce((a, b) => {
+        const latestGeneralDate = generalLaneArr.reduce((a, b) => { 
             return new Date(a.daterecorded) > new Date(b.daterecorded) ? a : b;
         });
         arrayFinalObjects = [...arrayFinalObjects, latestGeneralDate];
