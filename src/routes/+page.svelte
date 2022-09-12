@@ -8,7 +8,7 @@
 	import { DateTime as EasePickDateTime } from '@easepick/bundle';
 	import { DateTime } from 'luxon';
 	import Flatpickr from 'flatpickr';
-	import monthSelectPlugin from 'flatpickr/dist/plugins/monthSelect';
+	import monthSelectPlugin from 'flatpickr/dist/plugins/monthSelect/index.js';
 	import 'flatpickr/dist/flatpickr.css';
 	import 'flatpickr/dist/plugins/monthSelect/style.css';
 	import { Moon } from 'svelte-loading-spinners'
