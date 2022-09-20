@@ -12,6 +12,7 @@
 	import 'flatpickr/dist/flatpickr.css';
 	import 'flatpickr/dist/plugins/monthSelect/style.css';
 	import { Moon } from 'svelte-loading-spinners';
+	import { dev } from '$app/env';
 
 	/**
 	 * Svelte Strap doesn't work with svelte kit, so I had to use this workaround - npm i git+https://github.com/laxadev/sveltestrap.git
@@ -36,39 +37,6 @@
 	// import { Terser } from 'vite';
 
 	/*************************** CONSTANTS AND GLOBAL VARIABLE DEFINING ****************************/
-	/**
-	 * Although I would love to stick with my capitalized constant naming convention, the npm package requires this naming
-	 */
-	const theme = {
-		calendar: {
-			width: '30vw',
-			maxWidth: '100vw',
-			legend: {
-				height: '45px'
-			},
-			shadow: '0px 10px 26px rgba(0, 0, 0, 0.25)',
-			colors: {
-				text: {
-					primary: '#333',
-					highlight: '#fff'
-				},
-				background: {
-					primary: '#fff',
-					highlight: '#eb7400',
-					hover: '#eee'
-				},
-				border: '#eee'
-			},
-			font: {
-				regular: '1.5em',
-				large: '10em'
-			},
-			grid: {
-				disabledOpacity: '.35',
-				outsiderOpacity: '.6'
-			}
-		}
-	};
 	/**
 	 * Port association with name and number
 	 */
@@ -102,7 +70,7 @@
 	console.log(CALIPORTS);
 
 	/**
-	 * Available ports with CRON
+	 * Available ports with CRON script that other repo is executing
 	 */
 	const dropperPorts = [
 		{ label: 'Calexico East', value: PORTS['Calexico East'] },
@@ -128,7 +96,7 @@
 
 	/*************************** FLEXIBLE VARIABLE DEFINING ****************************/
 
-	/** I'm going to use the constants given above to create a default for the btsObject so the program doesn't throw an error on load*/
+	/** BTS Object - Eg. - {Pedestrians: {10000,-10}}*/
 
 	let btsObject: { [key: string]: { currentCount: number; percentChange: number } } = {};
 	for (const key in mergedObject) {
@@ -137,7 +105,9 @@
 			percentChange: 0
 		};
 	}
-
+	/**
+	 * Wait Times Obj 
+	 */
 	let waitTimesObj: {
 		lastUpdateTime: string;
 		found: { laneName: string; delay: number; average: number; percentChange: number }[];
@@ -259,7 +229,9 @@
 		let elementFinish = document.getElementById('dateCalendarEnd')!;
 		calendarStart = Flatpickr(elementStart, {
 			onValueUpdate: (selectedDates, dateStr, instance) => {
-				if (valueStart != dateStr) startDate = dateStr;
+				if (valueStart != dateStr) {
+					startDate = dateStr;
+				}
 				console.log('change', dateStr);
 
 				valueStart = dateStr;
@@ -272,7 +244,6 @@
 					shorthand: false, //defaults to false
 					dateFormat: 'Y-m-d', //defaults to "F Y"
 					altFormat: 'F j, Y',
-
 					theme: 'dark' // defaults to "light"
 				})
 			]
@@ -283,14 +254,10 @@
 				if (valueEnd != dateStr) {
 					console.log(dateStr);
 					endDate = dateStr;
-
-					// conversionDateEnd = DateTime.fromFormat(dateStr, 'yyyy-MM-d');
 				}
 				// onValueUpdate fired even if no change happend
 				console.log('change', dateStr);
-
 				valueEnd = dateStr;
-
 				if (valueEnd == '') console.log('clear');
 			},
 			defaultDate: endDate,
@@ -304,7 +271,7 @@
 		});
 	}
 	/**
-	 * Open Calendar - Workaround for Flatpickr's terrible calendar opening (clicking on the element apparently doesnt' work normally)
+	 * Open Calendar - Workaround for Flatpickr's terrible calendar opening (clicking on the element apparently doesn't work normally)
 	 * @param start Is the Calendar for the Start date or for the end date?
 	 */
 	function openCalendar(start: boolean) {
@@ -438,6 +405,7 @@
 		);
 		lastUpdateDateFormatted = Helper.dateFormatGenerator(lastUpdateDateObject);
 		lastUpdatePreviousDateFormatted = Helper.dateFormatGenerator(lastUpdatePreviousDateObject);
+		// lastUpdatedTrade = H
 	}
 	/*************************** END DATES GENERATION SECTION  ****************************/
 
@@ -447,12 +415,8 @@
 	 * Get Total Trade Value
 	 * This function needs to be updated with caching implemented
 	 */
-	async function getTradeValue() {
-		/**
-		 * Translates port name to Trade Port Code - ("San Ysidro" -> 2404)
-		 */
-		let totalSum = 0;
-		let totalPreviousSum = 0;
+
+	 async function getTradeValue() {
 		const translationObject = {
 			'San Ysidro': 2404,
 			Andrade: 2502,
@@ -461,43 +425,83 @@
 			'Otay Mesa': 2506,
 			Tecate: 2505
 		};
-		for (let port of selectedPortNames) {
-			let startDate = startDateLuxon;
-			let endDate = endDateLuxon;
-			console.log(port)
-			/**
-			 * There's no date between in this api :(, we must loop through every month from start date to end date
-			 */
-			for (let dt = startDate; dt <= endDate; dt = dt.plus({ months: 1 })) {
-				const query = `https://data.bts.gov/resource/ku5b-t97n.json?$$app_token=wUg7QFry0UMh97sXi8iM7I3UX&$limit=100000&year=${dt.year}&month=${dt.month}&depe=${translationObject[port]}`;
-				console.log(query);
-				const data = await (await fetch(query)).json();
-				const sum = data.reduce((accumulator: any, object: { value: any }) => {
-					return accumulator + Number(object.value);
-				}, 0);
-				console.log(sum);
-				totalSum += sum;
-				/**
-				 * Let's go back a year from when this query happened for some comparison
-				 */
-				const previousQuery = `https://data.bts.gov/resource/ku5b-t97n.json?$$app_token=wUg7QFry0UMh97sXi8iM7I3UX&$limit=100000&year=${
-					dt.year - 1
-				}&month=${dt.month}&depe=${translationObject[port]}`;
-				const previousData = await (await fetch(previousQuery)).json();
-				const previousSum = previousData.reduce((accumulator: any, object: { value: any }) => {
-					return accumulator + Number(object.value);
-				}, 0);
-				console.log(sum);
-				totalPreviousSum += previousSum;
-			}
-		}
-
-		totalTrade = {
-			currentTrade: totalSum,
-			percentChange: Helper.calculatePercentDifference(totalSum, totalPreviousSum)
+		/**
+		 * Let's take the selected port names and convert into an array of trade id numbers
+		 */
+		let portNums: number[] = []
+		for (const [key, value] of Object.entries(translationObject)) {
+			portNums = [...portNums, value]
 		};
-		console.log(totalTrade);
-	}
+		let jsonObj = {functionName : "getTradeValues", ports : portNums, startDate : startDateLuxon, endDate : endDateLuxon}
+		let URI  = "http://localhost:5173/controller";
+		if (dev == false) {
+			URI = "https://borderdashboard/controller"
+		};
+		console.log("HELLOO????")
+		let rows = await (await fetch(URI, { method: 'POST', body: JSON.stringify(jsonObj) })).json()
+		totalTrade = rows;
+	 }
+	// async function getTradeValue() {
+	// 	// VARIABLE DEFINING SECTION
+	// 	let totalSum = 0;
+	// 	let totalPreviousSum = 0;
+	// 	/**
+	// 	 * Translates port name to Trade Port Code - ("San Ysidro" -> 2404)
+	// 	 */
+	// 	const translationObject = {
+	// 		'San Ysidro': 2404,
+	// 		Andrade: 2502,
+	// 		'Calexico East': 2507,
+	// 		'Calexico West': 2503,
+	// 		'Otay Mesa': 2506,
+	// 		Tecate: 2505
+	// 	};
+	// 	let startDate = startDateLuxon;
+	// 	let endDate = endDateLuxon;
+	// 	const lastDateUpdated = await Helper.getLastTradeDate(endDate, startDate);
+	// 	if (lastDateUpdated <= endDate) {
+	// 			endDate = lastDateUpdated;
+	// 			startDate = lastDateUpdated.minus({years: 1})
+	// 		}
+	// 	// END VARIABLE DEFINING SECTION
+
+	// 	// LETS LOOP THROUGH THE SELECTED PORTS
+	// 	for (let port of selectedPortNames) {
+	// 		console.log(lastDateUpdated, 'LAST DATE UPDATE PORTS');
+	// 		console.log(port);
+	// 		/**
+	// 		 * There's no date between in this api :(, we must loop through every month from start date to end date
+	// 		 */
+	// 		for (let dt = startDate; dt <= endDate; dt = dt.plus({ months: 1 })) {
+	// 			const query = `https://data.bts.gov/resource/ku5b-t97n.json?$$app_token=wUg7QFry0UMh97sXi8iM7I3UX&$limit=100000&year=${dt.year}&month=${dt.month}&depe=${translationObject[port]}`;
+	// 			console.log(query);
+	// 			const data = await (await fetch(query)).json();
+	// 			const sum = data.reduce((accumulator: any, object: { value: any }) => {
+	// 				return accumulator + Number(object.value);
+	// 			}, 0);
+	// 			console.log(sum);
+	// 			totalSum += sum;
+	// 			/**
+	// 			 * Let's go back a year from when this query happened for some comparison
+	// 			 */
+	// 			const previousQuery = `https://data.bts.gov/resource/ku5b-t97n.json?$$app_token=wUg7QFry0UMh97sXi8iM7I3UX&$limit=100000&year=${
+	// 				dt.year - 1
+	// 			}&month=${dt.month}&depe=${translationObject[port]}`;
+	// 			const previousData = await (await fetch(previousQuery)).json();
+	// 			const previousSum = previousData.reduce((accumulator: any, object: { value: any }) => {
+	// 				return accumulator + Number(object.value);
+	// 			}, 0);
+	// 			console.log(sum);
+	// 			totalPreviousSum += previousSum;
+	// 		}
+	// 	}
+
+	// 	totalTrade = {
+	// 		currentTrade: totalSum,
+	// 		percentChange: Helper.calculatePercentDifference(totalSum, totalPreviousSum)
+	// 	};
+	// 	console.log(totalTrade);
+	// }
 
 	/*************************** END TRADE VALUE SECTION  ****************************/
 
@@ -650,7 +654,11 @@
 				to
 				<input id="dateCalendarEnd" class="p-0 m-0" on:click={() => openCalendar(false)} />
 
-				<button class=" ms-2 btn " style="background-color: #10376f; color: white" on:click={() => submitCalendar()}>Submit</button>
+				<button
+					class=" ms-2 btn "
+					style="background-color: #10376f; color: white"
+					on:click={() => submitCalendar()}>Submit</button
+				>
 				<!-- <Flatpickr {options} bind:value bind:formattedValue on:change={handleChange} name="date" /> -->
 			</div>
 		</NavbarBrand>
@@ -969,9 +977,6 @@ background: linear-gradient(90deg, rgba(0,242,96,1) 0%, rgba(5,117,230,1) 100%);
 						<h5 class="card-title text-center">
 							Last Updated: <b>{waitTimesObj.lastUpdateTime}</b>
 						</h5>
-
-						<!-- <p class="card-text">With supporting text below as a natural lead-in to additional content.</p> -->
-						<!-- <a href="#" class="btn btn-primary">Go somewhere</a> -->
 					</div>
 				</div>
 				{#each waitTimesObj.found as laneFound}

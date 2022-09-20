@@ -68,11 +68,11 @@ export class Helper {
         const slicedDay = ('0' + day).slice(-2); // '11'
         return `${year}-${slicedMonth}-${slicedDay}`;
     };
-    /**
- * A function to get the current date object
- * @returns An object with current year, current month, and current day. Eg, {year : 2022, month : 9, day : 1}
- */
 
+    /**
+     * 
+     * @returns Last update date - BTS (Luxon DateTime)
+     */
     static async getLastDate() {
         const data: IBtsData[] = await (await fetch('https://data.bts.gov/id/keg4-3bc2.json?$limit=100000&$where=date%20between%20%272021-09-01T00:00:00.000%27%20and%20%272022-09-01T00:00:00.000%27&border=US-Mexico%20Border')).json();
         let dates: any[] = [];
@@ -85,6 +85,21 @@ export class Helper {
         return DateTime.fromJSDate(maxDate).setZone("America/Tijuana").plus({ months: 1 });
 
     };
+    /**
+     * @returns Last updated date - Trade Data
+     */
+    static async getLastTradeDate(endDate: DateTime, startDate: DateTime) {
+        // let endDate = DateTime.fromFormat('yyyy-MM-dd')
+        for (let dt = endDate; dt >= startDate; dt = dt.minus({ months: 1 })) {
+            const data: [] = (await (await fetch(`https://data.bts.gov/resource/ku5b-t97n.json?$$app_token=wUg7QFry0UMh97sXi8iM7I3UX&$limit=100000&year=${dt.year}&month=${dt.month}`)).json());
+            console.log(data);
+            if (data.length > 1) {
+                return dt;
+            }
+
+        }
+        return endDate;
+    }
     /**
      * 
      * @param date A formatted date string 

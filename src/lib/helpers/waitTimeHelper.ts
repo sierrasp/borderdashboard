@@ -2,44 +2,31 @@
 import { DateTime } from "luxon";
 import { dev } from '$app/env';
 import { Helper } from "./btsHelper";
+import type { IWaitTime } from "./waitTimeHelperTypes";
 export default class waitTimes {
     portNum = 250401;
     storageID = "";
+    URI = "http://localhost:5173/controller"
     constructor(portNum: number) {
         this.portNum = portNum;
+        if (dev == false) {
+            this.URI = "https://borderdashboard.com/controller";
+        }
     };
     async getCurrentWaitTimes() {
-        /**
-         * I need to identify which ports are closed
-         */
-        //  const laneClosedReg = /((Ready|Sentri|General) Lanes: {2}Lanes Closed)/gm
-        //  const openLanesRegex = /(General|Ready|Sentri).(.*?)delay/gm;
-
-        // delay : delay,
-        // average : average,
-        // percentChange : percentDiff,
-        let returnObj: { lastUpdateTime: string, found: { laneName : string, delay: number, average: number, percentChange: number }[], missing: { laneName : string, reason : string }[] } = {
+        let returnObj: { lastUpdateTime: string, found: { laneName: string, delay: number, average: number, percentChange: number }[], missing: { laneName: string, reason: string }[] } = {
             lastUpdateTime: "",
             found: [],
             missing: [],
         };
-        let lastWaitTimeURI = ``;
-        let averageWaitTimeURI = ``;
-        lastWaitTimeURI = `https://borderdashboard.com/controller/getLastWaitTimes/${this.portNum}`;
-        averageWaitTimeURI = `https://borderdashboard.com/controller/getAverageWaitTimes/${this.portNum}`;
-        console.log(averageWaitTimeURI);
-        if (dev == true) {
-            lastWaitTimeURI = `http://localhost:5173/controller/getLastWaitTimes/${this.portNum}`;
-            averageWaitTimeURI = `http://localhost:5173/controller/getAverageWaitTimes/${this.portNum}`;
-            console.log(averageWaitTimeURI);
-        };
-
+        /**
+         * JSON object to be posted to server API 
+         */
+        const lastWaitJson: { functionName: string, ports: number[] } = { functionName: "getLastWaitTimes", ports: [this.portNum] };
+        const averageWaitTimeJson: { functionName: string, ports: number[] } = { functionName: "getAverageWaitTimes", ports: [this.portNum] };
         try {
-
-            console.log(lastWaitTimeURI);
-            const lastWaitTimes = await this.getMostRecentDates(lastWaitTimeURI);
-            console.log(lastWaitTimes);
-            const averageWaitTimes : { found: { avg: string, lane_type: number }[], missing: number[] } = await (await fetch(averageWaitTimeURI)).json();
+            const lastWaitTimes = await this.getMostRecentDates(lastWaitJson);
+            const averageWaitTimes: { found: { avg: string, lane_type: number }[], missing: number[] } = await (await fetch(this.URI, { method: 'POST', body: JSON.stringify(averageWaitTimeJson) })).json();
             console.log(`${lastWaitTimes[0].daterecorded}`);
             const newDate = DateTime.fromISO(`${lastWaitTimes[0].daterecorded}`);
             console.log(newDate);
@@ -59,16 +46,16 @@ export default class waitTimes {
 
             averageWaitTimes.found.forEach((element) => {
                 let average = 0;
-                let delay = 0; 
-                let percentDiff = 0; 
+                let delay = 0;
+                let percentDiff = 0;
                 if (Number(element.avg) != 0) {
                     average = Math.round(Number(element.avg) / 60);
-                     delay = Math.round(Number(lastWaitTimes[element.lane_type].delay_seconds) / 60);
-                     percentDiff = Helper.calculatePercentDifference(delay, average);
+                    delay = Math.round(Number(lastWaitTimes[element.lane_type].delay_seconds) / 60);
+                    percentDiff = Helper.calculatePercentDifference(delay, average);
                 }
                 if (element.lane_type == 0) {
                     returnObj.found.push({
-                        laneName : "General",
+                        laneName: "General",
                         delay: delay,
                         average: average,
                         percentChange: percentDiff,
@@ -76,7 +63,7 @@ export default class waitTimes {
                 }
                 if (element.lane_type == 1) {
                     returnObj.found.push({
-                        laneName : "Sentri",
+                        laneName: "Sentri",
                         delay: delay,
                         average: average,
                         percentChange: percentDiff,
@@ -84,7 +71,7 @@ export default class waitTimes {
                 }
                 if (element.lane_type == 2) {
                     returnObj.found.push({
-                        laneName : "Ready",
+                        laneName: "Ready",
                         delay: delay,
                         average: average,
                         percentChange: percentDiff,
@@ -95,20 +82,20 @@ export default class waitTimes {
             averageWaitTimes.missing.forEach((element) => {
                 if (element == 0) {
                     returnObj.missing.push({
-                        laneName : "General",
-                        reason : "Lane Closed"
+                        laneName: "General",
+                        reason: "Lane Closed"
                     });
                 }
                 if (element == 1) {
                     returnObj.missing.push({
-                        laneName : "Sentri",
-                        reason : "Lane Closed"
+                        laneName: "Sentri",
+                        reason: "Lane Closed"
                     });
                 }
                 if (element == 2) {
                     returnObj.missing.push({
-                        laneName : "Ready",
-                        reason : "Lane Closed"
+                        laneName: "Ready",
+                        reason: "Lane Closed"
                     });
                 }
             });
@@ -144,21 +131,6 @@ export default class waitTimes {
             }
         }
     };
-    // checkPortClosed(averageWaitTimes : {avg : string, lane_type : number}[]) {
-    //     let missing: {avg : string, lane_type : number}[] = [];
-    //     for (let i = 0; i <= 3; i++) {
-    //         if (averageWaitTimes.indexOf(i) == -1) {
-    //             missing = [...missing, averageWaitTimes[i]];
-    //         };
-    //     } ;   
-
-    //     console.log("HELELEOEOEOEOE?????")
-    //     return {
-    //         averageWaitTimes : averageWaitTimes, 
-    //         missing : missing
-    //     }     
-    // };
-
     toAPM(date: DateTime) {
         let hours = Number(date.hour)
         const minutes = Number(date.minute)
@@ -172,13 +144,12 @@ export default class waitTimes {
 
         return strTime
     };
-    async getMostRecentDates(URI: string) {
-        console.log(URI);
-        let arrayFinalObjects: { lane_type: number, daterecorded: string, delay_seconds: number }[] = [];
-        const rows: { lane_type: number, daterecorded: string, delay_seconds: number }[] = await (await fetch(URI)).json();
-        let generalLaneArr: { lane_type: number, daterecorded: string, delay_seconds: number }[] = [];
-        let sentriLaneArr: { lane_type: number, daterecorded: string, delay_seconds: number }[] = [];
-        let readyLaneArr: { lane_type: number, daterecorded: string, delay_seconds: number }[] = [];
+    async getMostRecentDates(jsonObject: { functionName: string, ports: number[] }) {
+        let arrayFinalObjects: IWaitTime[] = [];
+        const rows: IWaitTime[] = await (await fetch(this.URI, { method: 'POST', body: JSON.stringify(jsonObject) })).json();
+        let generalLaneArr: IWaitTime[] = [];
+        let sentriLaneArr: IWaitTime[] = [];
+        let readyLaneArr: IWaitTime[] = [];
         rows.forEach(x => {
             if (x.lane_type == 0) {
                 generalLaneArr = [...generalLaneArr, x];
@@ -190,20 +161,7 @@ export default class waitTimes {
                 readyLaneArr = [...readyLaneArr, x];
             }
         });
-
-        // console.log(rows);
-        // let arrayFinalObjects : {lane_type: number, daterecorded: string, delay_seconds : number}[] = [];
-        // const generalLane = rows.filter(el => {
-        //     return el.lane_type = 0;
-        // });
-        // console.log(generalLane);
-        // const sentriLane = rows.filter(el => {
-        //     return el.lane_type = 1;
-        // });
-        // const readyLane = rows.filter(el => {
-        //     return el.lane_type = 2;
-        // });
-        const latestGeneralDate = generalLaneArr.reduce((a, b) => { 
+        const latestGeneralDate = generalLaneArr.reduce((a, b) => {
             return new Date(a.daterecorded) > new Date(b.daterecorded) ? a : b;
         });
         arrayFinalObjects = [...arrayFinalObjects, latestGeneralDate];

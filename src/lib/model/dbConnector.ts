@@ -25,7 +25,8 @@ export default class dbConnector {
     // eslint-disable-next-line no-useless-catch
     try {
       const res = await pool.query(q);
-      console.log(res.rows);
+      // console.log(res.rows);
+      pool.end();
       return res;
 
     } catch (err) {
