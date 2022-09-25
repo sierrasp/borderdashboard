@@ -162,6 +162,18 @@ export class Helper {
         });;
         return measureObject;
     }
+    /**
+     * 
+     * @param d1 Date One - Luxon DateTime
+     * @param d2 Date Two - Luxon DateTime
+     * @returns True if Dates One is smaller than Date Two - False otherwise 
+     */
+    static dateSmaller(d1 : DateTime, d2 : DateTime) {
+        const date1 = d1.toJSDate();
+        const date2 = d2.toJSDate();
+        console.log(date1, date2, "COMPARISON")
+        return (date1.getTime() < date2.getTime());
+    }
     store(data: IBtsData[]) {
         const valueStringified = JSON.stringify(data);
         try {

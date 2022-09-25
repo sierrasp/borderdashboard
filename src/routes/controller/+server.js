@@ -20,6 +20,10 @@ export async function POST({ request }) {
     console.log(rows);
     return new Response(String(JSON.stringify(rows)))
   }
+  if (params.functionName == "getBTSValues") {
+    let rows = await dbHelper.getBTSValues(params.measureObj, params.ports, params.startDate, params.endDate);
+    return new Response(String(JSON.stringify(rows)));
+  }
   return new Response(String("Error"))
 
 }
