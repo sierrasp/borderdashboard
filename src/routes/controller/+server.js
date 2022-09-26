@@ -1,6 +1,5 @@
 // import db from '$lib/db';
 // /** @type {import('@sveltejs/kit').RequestHandler} */
-import { json } from '@sveltejs/kit';
 import { dbHelper } from '$lib/model/dbHelper';
 export async function POST({ request }) {
   const params = await request.json();

@@ -10,7 +10,7 @@ export default class waitTimes {
     constructor(portNum: number) {
         this.portNum = portNum;
         if (dev == false) {
-            this.URI = "https://borderdashboard.com/controller";
+            this.URI = "http://cors-anywhere.com/https://borderdashboard.com/controller";
         }
     };
     async getCurrentWaitTimes() {

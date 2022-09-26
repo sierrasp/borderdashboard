@@ -59,7 +59,7 @@
 	*/
 	let URI  = "http://localhost:5173/controller";
 		if (dev == false) {
-			URI = "https://borderdashboard/controller"
+			URI = "http://cors-anywhere.com/https://borderdashboard/controller"
 		};
 
 	/**
@@ -374,6 +374,7 @@
 		btsObject = await (await fetch(URI, { method: 'POST', body: JSON.stringify(postOBJ),   mode: 'no-cors',
   headers: {
     'Content-Type': 'application/json',
+
   },})).json();
 		lastBTSDateLuxon = DateTime.fromJSDate(new Date(btsObject.lastDate));
 		btsLoaded = true;
