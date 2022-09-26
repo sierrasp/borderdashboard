@@ -602,9 +602,9 @@
 				<h5 class="my-0 me-2">Date Selector:</h5>
 				<!-- <input class="w-50  h-50 text-center" style="border: none; " id="dateRange" /> -->
 				<!-- <input class="" id="dateRange"> -->
-				<input id="dateCalendarStart" class="p-0 m-0" on:click={() => openCalendar(true)} />
+				<input id="dateCalendarStart" class="me-2 m-0" on:click={() => openCalendar(true)} />
 				to
-				<input id="dateCalendarEnd" class="p-0 m-0" on:click={() => openCalendar(false)} />
+				<input id="dateCalendarEnd" class="ms-2 m-0" on:click={() => openCalendar(false)} />
 
 				<button
 					class=" ms-2 btn "
@@ -642,7 +642,10 @@ background: linear-gradient(90deg, rgba(0,242,96,1) 0%, rgba(5,117,230,1) 100%);
 									<b>{endDateLuxon.toFormat('LLL, yyyy')}</b>
 									{/if}
 									{#if maxDateBTS && btsLoaded}
-									<i style="color: red">(Max Value)</i>
+									<i class="fa-solid fa-circle-info" id="maxDateBTS"></i>
+									<Tooltip target={`maxDateBTS`} placement="right"
+									>Range is limited to the maximum date in this dataset</Tooltip
+								>
 								{/if}
 								</h6>
 							</div>
@@ -816,12 +819,15 @@ background: linear-gradient(90deg, rgba(0,242,96,1) 0%, rgba(5,117,230,1) 100%);
 								<h6 class="my-0">
 									<b>{startDateLuxon.toFormat('LLL, yyyy')}</b> -
 									{#if maxDateTrade} 
-									<b>{lastTradeDateLuxon.toFormat('LLL, yyyy')}</b>
+									<b><i>{lastTradeDateLuxon.toFormat('LLL, yyyy')}</i></b>
 									{:else}
 									<b>{endDateLuxon.toFormat('LLL, yyyy')}</b>
 									{/if}
 									{#if maxDateTrade && btsLoaded}
-									<i style="color: red">(Max Value)</i>
+									<i class="fa-solid fa-circle-info" id="maxDateTrade"></i>
+									<Tooltip target={`maxDateTrade`} placement="right"
+									>Range is limited to the maximum date in this dataset</Tooltip
+								>
 								{/if}
 								</h6>
 							</div>
@@ -973,7 +979,7 @@ background: linear-gradient(90deg, rgba(0,242,96,1) 0%, rgba(5,117,230,1) 100%);
 										{#if laneFound.percentChange < 0}
 											<i
 												class="fa fa-angle-double-down float-right fa-xl "
-												style="color: red;"
+												style="color: green;"
 												aria-hidden="true"
 											/>
 											{laneFound.percentChange}%
@@ -991,7 +997,7 @@ background: linear-gradient(90deg, rgba(0,242,96,1) 0%, rgba(5,117,230,1) 100%);
 										{:else}
 											<i
 												class="fa fa-angle-double-up float-right fa-xl "
-												style="color: green;"
+												style="color: red;"
 												aria-hidden="true"
 											/>
 											{laneFound.percentChange}%
