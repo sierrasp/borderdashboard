@@ -1,5 +1,3 @@
-
-
 FROM node:18-bullseye
 # install dependencies
 WORKDIR /app
@@ -16,7 +14,7 @@ RUN npm run build
 # ~> Saves 35MB
 ###
 FROM node:18-bullseye
-
+ENV TZ=America/Los_Angeles
 WORKDIR /app
 COPY --from=0 /app .
 COPY . .

@@ -59,7 +59,7 @@
 	*/
 	let URI  = "http://localhost:5173/controller";
 		if (dev == false) {
-			URI = "http://cors-anywhere.com/https://borderdashboard/controller"
+			URI = "https://borderdashboard.com/controller"
 		};
 
 	/**
@@ -542,7 +542,7 @@
 			</div></NavbarBrand
 		>
 		<NavbarBrand style="position: absolute; left: 50%;  transform: translateX(-50%);" href="/">
-			<h1>Cale-Baja Border Dashboard</h1></NavbarBrand
+			<h1>Cali-Baja Border Dashboard</h1></NavbarBrand
 		>
 		<NavbarToggler on:click={() => (isOpen = !isOpen)} />
 

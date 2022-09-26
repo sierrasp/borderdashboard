@@ -10,7 +10,7 @@ export default class waitTimes {
     constructor(portNum: number) {
         this.portNum = portNum;
         if (dev == false) {
-            this.URI = "http://cors-anywhere.com/https://borderdashboard.com/controller";
+            this.URI = "https://borderdashboard.com/controller";
         }
     };
     async getCurrentWaitTimes() {
@@ -28,8 +28,7 @@ export default class waitTimes {
             const lastWaitTimes = await this.getMostRecentDates(lastWaitJson);
             const averageWaitTimes: { found: { avg: string, lane_type: number }[], missing: number[] } = await (await fetch(this.URI, { method: 'POST', body: JSON.stringify(averageWaitTimeJson) })).json();
             console.log(`${lastWaitTimes[0].daterecorded}`);
-            const newDate = DateTime.fromISO(`${lastWaitTimes[0].daterecorded}`);
-            console.log(newDate);
+            const newDate = DateTime.fromISO(`${lastWaitTimes[0].daterecorded}`).setZone('America/Tijuana');
             console.log(newDate);
             const currentDate = DateTime.local();
             let returnString = ``;

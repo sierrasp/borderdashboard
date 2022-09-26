@@ -88,7 +88,7 @@ export class dbHelper extends dbConnector {
             endDate = lastDateUpdated;
         }; 
         let objectToBeReturned: { lastDate : Date, [key: string]: { currentCount: number; percentChange: number } } = {
-            lastDate: lastDateUpdated.toJSDate()
+            lastDate: lastDateUpdated.toJSDate(),
         };
 
 		for (const [key, value] of Object.entries(measureObj)) {
@@ -116,7 +116,7 @@ export class dbHelper extends dbConnector {
                 else {
                     measureQ += ` measure = '${value[i]}' OR`
                 }
-                
+                    
             }
             console.log(portQ, "PORT Q");
             console.log(`SELECT SUM(value) FROM btsnums WHERE date <= '${endDate.year - 1}-${endDate.month}-01' AND date >= '${startDate.year - 1}-${startDate.month}-01' AND (${portQ}) AND (${measureQ})`)
