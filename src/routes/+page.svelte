@@ -371,7 +371,7 @@
 			endDate : endDateLuxon
 		}
 
-		btsObject = await (await fetch(URI, { method: 'POST', body: JSON.stringify(postOBJ) })).json();
+		btsObject = await (await fetch(URI, { method: 'POST', body: JSON.stringify(postOBJ), mode : 'cors'})).json();
 		lastBTSDateLuxon = DateTime.fromJSDate(new Date(btsObject.lastDate));
 		btsLoaded = true;
 	}

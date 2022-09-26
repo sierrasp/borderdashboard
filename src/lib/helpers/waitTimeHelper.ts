@@ -146,7 +146,7 @@ export default class waitTimes {
     };
     async getMostRecentDates(jsonObject: { functionName: string, ports: number[] }) {
         let arrayFinalObjects: IWaitTime[] = [];
-        const rows: IWaitTime[] = await (await fetch(this.URI, { method: 'POST', body: JSON.stringify(jsonObject) })).json();
+        const rows: IWaitTime[] = await (await fetch(this.URI, { method: 'POST', body: JSON.stringify(jsonObject), mode : 'cors' })).json();
         let generalLaneArr: IWaitTime[] = [];
         let sentriLaneArr: IWaitTime[] = [];
         let readyLaneArr: IWaitTime[] = [];
