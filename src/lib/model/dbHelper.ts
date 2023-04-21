@@ -82,7 +82,7 @@ export class dbHelper extends dbConnector {
         /**
          *  @type [{date : string}] 
          */
-        const lastDateRows = await dbConnector.query("SELECT date FROM btsnums ORDER BY date DESC LIMIT 1;  ");
+        const lastDateRows = await dbConnector.query("SELECT date FROM rss_times ORDER BY date DESC LIMIT 1;  ");
         const lastDateUpdated: DateTime = DateTime.fromJSDate(new Date(lastDateRows.rows[0]['date']));
         if (lastDateUpdated <= endDate) {
             endDate = lastDateUpdated;
@@ -119,7 +119,10 @@ export class dbHelper extends dbConnector {
                     
             }
             console.log(portQ, "PORT Q");
-            console.log(`SELECT SUM(value) FROM btsnums WHERE date <= '${endDate.year - 1}-${endDate.month}-01' AND date >= '${startDate.year - 1}-${startDate.month}-01' AND (${portQ}) AND (${measureQ})`)
+            console.log(`SELECT SUM(value) FROM btsnums WHERE date <= '${endDate.year - 1}-${endDate.month}-01' AND date >= '${startDate.year - 1}-${startDate.month}-01' AND (${portQ}) AND (${measureQ})`);
+
+            // const BTS_DATA = await (fetch(`https://data.transportation.gov/resource/keg4-3bc2.json?$limit=100000&$where=date between '${startDate}T00:00:00.000' and '${endDate}T00:00:00.000'&border=US-Mexico Border${stateString}${measureString}${portString}`)).js
+            // https://data.transportation.gov/resource/keg4-3bc2.json?$limit=100000&$where=date between '${startDate}T00:00:00.000' and '${endDate}T00:00:00.000'&border=US-Mexico Border${stateString}${measureString}${portString}
             const totalQueried = await dbConnector.query(`SELECT SUM(value) FROM btsnums WHERE date <= '${endDate.year}-${endDate.month}-01' AND date >= '${startDate.year}-${startDate.month}-01' AND (${portQ}) AND (${measureQ})`);
             const previousQueried = await dbConnector.query(`SELECT SUM(value) FROM btsnums WHERE date <= '${endDate.year - 1}-${endDate.month}-01' AND date >= '${startDate.year - 1}-${startDate.month}-01' AND (${portQ}) AND (${measureQ})`);
             currentCount += Number(await totalQueried.rows[0]['sum']);

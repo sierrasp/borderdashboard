@@ -1,8 +1,7 @@
 <script lang="ts">
-	// import { lineChart } from '$lib/helpers/lineChart';
+	/******************************* IMPORTS ***********************************/
 	import { onMount } from 'svelte';
 	import { Helper } from '$lib/helpers/btsHelper';
-	// import { Datepicker } from 'svelte-calendar';
 	import waitTimes from '$lib/helpers/waitTimeHelper';
 	import { DateTime } from 'luxon';
 	import Flatpickr from 'flatpickr';
@@ -31,7 +30,6 @@
 		Nav
 	} from 'sveltestrap';
 	import type { Instance } from 'flatpickr/dist/types/instance';
-	// import { Terser } from 'vite';
 
 	/*************************** CONSTANTS AND GLOBAL VARIABLE DEFINING ****************************/
 	/**
@@ -57,10 +55,7 @@
 	/**
 	 * This is the URI for posting to server.js under the controller folder
 	*/
-	let URI  = "http://localhost:5173/controller";
-		if (dev == false) {
-			URI = "https://borderdashboard.com/controller"
-		};
+	const URI  = (dev == true) ? "http://localhost:5173/controller" : "https://borderdashboard.com/controller";
 
 	/**
 	 * These are all of the crossing ports for California in numerical form
@@ -243,14 +238,13 @@
 	 * If it's smaller, than set @var maxDateTrade to true - if it's not, it remains false
 	 */
 	let maxDateTrade = false;
-	$: maxDateTrade = Helper.dateSmaller(lastTradeDateLuxon, endDateLuxon);
-	$: console.log(lastTradeDateLuxon, endDateLuxon, maxDateTrade)
+	$: maxDateTrade = Helper.isDateSmaller(lastTradeDateLuxon, endDateLuxon);
 		/**
 	 * This boolean is to see if the maximum date that bts gives us for trade is smaller than the date selected by the user 
 	 * If it's smaller, than set @var maxDateBTS to true - if it's not, it remains false
 	 */
 	let maxDateBTS = false;
-	$: maxDateBTS = Helper.dateSmaller(lastBTSDateLuxon, endDateLuxon);
+	$: maxDateBTS = Helper.isDateSmaller(lastBTSDateLuxon, endDateLuxon);
 
 	/**
 	 * This variable is to tell if the BTS data has loaded yet
@@ -279,7 +273,6 @@
 		let valueEnd = '';
 		let elementStart = document.getElementById('dateCalendarStart')!;
 		let elementFinish = document.getElementById('dateCalendarEnd')!;
-		console.log(startDate, "CALENDAR SECTION")
 		calendarStart = Flatpickr(elementStart, {
 			onValueUpdate: (selectedDates, dateStr, instance) => {
 				if (valueStart != dateStr) {
@@ -305,7 +298,6 @@
 			minDate: startDate,
 			onValueUpdate: (selectedDates, dateStr, instance) => {
 				if (valueEnd != dateStr) {
-					console.log(dateStr);
 					endDate = dateStr;
 				}
 				// onValueUpdate fired even if no change happend
@@ -376,6 +368,7 @@
     'Content-Type': 'application/json',
 
   },})).json();
+  
 		lastBTSDateLuxon = DateTime.fromJSDate(new Date(btsObject.lastDate));
 		btsLoaded = true;
 	}
@@ -460,12 +453,8 @@
 		for (const [key, value] of Object.entries(translationObject)) {
 			portNums = [...portNums, value]
 		};
-		console.log(startDateLuxon.year, startDateLuxon.month, "THIS IS THE START DATE IN LUXN FORMAT")
-		console.log(endDateLuxon.year, endDateLuxon.month, "THIS IS THE END DATE IN LUXN FORMAT")
 		let jsonObj = {functionName : "getTradeValues", ports : portNums, startDate : startDateLuxon, endDate : endDateLuxon}
-		console.log("HELLOO????")
 		let rows = await (await fetch(URI, { method: 'POST', body: JSON.stringify(jsonObj) })).json();
-		// console.log(rows)
 		totalTrade = rows;
 		lastTradeDateLuxon = DateTime.fromJSDate(new Date(totalTrade.lastDate));
 	 }
@@ -477,7 +466,6 @@
 	 * @param event
 	 */
 	function handleSelect(value: number[], label: string) {
-		console.log(value);
 		selectedPorts = value;
 		dropperPortName = label;
 		setPortNames(value);
@@ -489,7 +477,6 @@
 	function setPortNames(portArray: number[]) {
 		selectedPortNames = [];
 		for (const portNum of portArray) {
-			console.log(portNum);
 			selectedPortNames = [
 				...selectedPortNames,
 				Object.keys(PORTS).find((key) => PORTS[key][0] === portNum)!

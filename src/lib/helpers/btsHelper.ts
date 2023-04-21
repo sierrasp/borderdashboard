@@ -49,9 +49,6 @@ export class Helper {
         console.log(`https://data.transportation.gov/resource/keg4-3bc2.json?$limit=100000&$where=date between '${startDate}T00:00:00.000' and '${endDate}T00:00:00.000'&border=US-Mexico Border${stateString}${measureString}${portString}`);
         return `https://data.transportation.gov/resource/keg4-3bc2.json?$limit=100000&$where=date between '${startDate}T00:00:00.000' and '${endDate}T00:00:00.000'&border=US-Mexico Border${stateString}${measureString}${portString}`
     }
-    // static cacheData(startDate : string, endDate : string) {
-    //     return 
-    // }
     /**
      * 
      * @param year Eg. 2021
@@ -168,7 +165,7 @@ export class Helper {
      * @param d2 Date Two - Luxon DateTime
      * @returns True if Dates One is smaller than Date Two - False otherwise 
      */
-    static dateSmaller(d1 : DateTime, d2 : DateTime) {
+    static isDateSmaller(d1 : DateTime, d2 : DateTime) {
         const date1 = d1.toJSDate();
         const date2 = d2.toJSDate();
         console.log(date1, date2, "COMPARISON")
