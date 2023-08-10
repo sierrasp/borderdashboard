@@ -54,8 +54,9 @@
 
 	/**
 	 * This is the URI for posting to server.js under the controller folder
-	*/
-	const URI  = (dev == true) ? "http://localhost:5173/controller" : "https://borderdashboard.com/controller";
+	 */
+	const URI =
+		dev == true ? 'http://localhost:5173/controller' : 'https://borderdashboard.com/controller';
 
 	/**
 	 * These are all of the crossing ports for California in numerical form
@@ -102,8 +103,11 @@
 
 	/** BTS Object - Eg. - {Pedestrians: {10000,-10}}*/
 
-	let btsObject: { lastDate : Date, [key: string]: { currentCount: number; percentChange: number } } = {
-		lastDate : DateTime.now()
+	let btsObject: {
+		lastDate: Date;
+		[key: string]: { currentCount: number; percentChange: number };
+	} = {
+		lastDate: DateTime.now()
 	};
 	for (const key in mergedObject) {
 		btsObject[key] = {
@@ -112,7 +116,7 @@
 		};
 	}
 	/**
-	 * Wait Times Obj 
+	 * Wait Times Obj
 	 */
 	let waitTimesObj: {
 		lastUpdateTime: string;
@@ -157,16 +161,15 @@
 	 */
 	let calendarStart: Instance;
 	let calendarEnd: Instance;
-/**
- * Total Trade Object
- */
-	let totalTrade: { totalTrade: number; percentChange: number, lastDate : string } = {
-		totalTrade: 0,
-		percentChange: 0,
-		lastDate : '2022-02-01T00:00:00.000-08:00'
-	};
-	$: totalTrade;
-	
+	/**
+	 * Total Trade Object
+	 */
+	// let totalTrade: { totalTrade: number; percentChange: number; lastDate: string } = {
+	// 	totalTrade: 0,
+	// 	percentChange: 0,
+	// 	lastDate: '2022-02-01T00:00:00.000-08:00'
+	// };
+	// $: totalTrade;
 
 	/*************************** END FLEXIBLE VARIABLE DEFINING ****************************/
 
@@ -206,14 +209,14 @@
 	let startDate: string;
 
 	$: endDate = `${DateTime.now().year}-${('0' + DateTime.now().month).slice(-2)}-01`;
-	$: console.log(endDate);	
-	
+	$: console.log(endDate);
+
 	/**
 	 * This is the end date but in luxon format
 	 */
 	$: endDateLuxon = DateTime.fromSQL(endDate);
-	$: startDate = `${DateTime.now().year -1}-${('0' + DateTime.now().month).slice(-2)}-01`;
-		/**
+	$: startDate = `${DateTime.now().year - 1}-${('0' + DateTime.now().month).slice(-2)}-01`;
+	/**
 	 * This is the start date but in luxon format
 	 */
 	$: startDateLuxon = DateTime.fromSQL(startDate);
@@ -227,20 +230,20 @@
 	 */
 	$: lastTradeDateLuxon = DateTime.fromSQL(previousEndDate);
 
-		/**
+	/**
 	 * This is the max date for BTS Data
 	 *   - I'm setting it for now to the end date minus a year @var previousEndDate but this will change once my date function is called
 	 */
 	$: lastBTSDateLuxon = DateTime.fromSQL(previousEndDate);
-	
+
 	/**
-	 * This boolean is to see if the maximum date that bts gives us for trade is smaller than the date selected by the user 
+	 * This boolean is to see if the maximum date that bts gives us for trade is smaller than the date selected by the user
 	 * If it's smaller, than set @var maxDateTrade to true - if it's not, it remains false
 	 */
 	let maxDateTrade = false;
 	$: maxDateTrade = Helper.isDateSmaller(lastTradeDateLuxon, endDateLuxon);
-		/**
-	 * This boolean is to see if the maximum date that bts gives us for trade is smaller than the date selected by the user 
+	/**
+	 * This boolean is to see if the maximum date that bts gives us for trade is smaller than the date selected by the user
 	 * If it's smaller, than set @var maxDateBTS to true - if it's not, it remains false
 	 */
 	let maxDateBTS = false;
@@ -248,7 +251,7 @@
 
 	/**
 	 * This variable is to tell if the BTS data has loaded yet
-	*/
+	 */
 
 	let btsLoaded = false;
 	$: btsLoaded;
@@ -258,7 +261,7 @@
 	/*************************** ON MOUNT SECTION  ****************************/
 	onMount(async () => {
 		pageLoaded = true;
-		// Let's set the last wait times and get the bts data, which will in turn get the trade data 
+		// Let's set the last wait times and get the bts data, which will in turn get the trade data
 		await setLastUpdate();
 		await getBtsGroup(mergedObject);
 		setCalendar();
@@ -350,31 +353,44 @@
 		/**
 		 * Ok now that our dates have been generated, let's get at the data collection
 		 */
-		await getTradeValue();
-		
+		// await getTradeValue();
+
 		/**
 		 * This is the object with all the data posted to the server for handling
-		*/
+		 */
 		let postOBJ = {
-			functionName : "getBTSValues", 
-			ports : selectedPortNames, 
-			measureObj : obj, 
-			startDate : startDateLuxon, 
-			endDate : endDateLuxon
+			functionName: 'getBTSValues',
+			ports: selectedPortNames,
+			measureObj: obj,
+			startDate: startDateLuxon,
+			endDate: endDateLuxon
+		};
+
+		// btsObject = await (
+		// 	await fetch(URI, {
+		// 		method: 'POST',
+		// 		body: JSON.stringify(postOBJ),
+		// 		headers: {
+		// 			'Content-Type': 'application/json',
+		// 			'Access-Control-Allow-Origin': '*',
+
+		// 		}
+		// 	})
+		// ).json();
+		btsObject = {
+			Passengers: { currentCount: 46372212, percentChange: -11 },
+			Pedestrians: { currentCount: 12657466, percentChange: -15 },
+			Trucks: { currentCount: 1426702, percentChange: -19 },
+			Vehicles: { currentCount: 28244259, percentChange: -12 },
+			lastDate: '2023-08-10T06:00:00.000Z'
 		}
-
-		btsObject = await (await fetch(URI, { method: 'POST', body: JSON.stringify(postOBJ),   mode: 'no-cors',
-  headers: {
-    'Content-Type': 'application/json',
-
-  },})).json();
-  
+		
 		lastBTSDateLuxon = DateTime.fromJSDate(new Date(btsObject.lastDate));
 		btsLoaded = true;
 	}
 
 	// /**
-	 
+
 	//  * @property Possible Measures - ["Pedestrians", "Trains", "Buses", "Personal Vehicle Passengers", "Personal Vehicles", "Trucks", "Train Passengers", "Bus Passengers"]
 	//  * @param measures - Input an array of measures for BTS -  Eg. ["Pedestrians", "Trains", etc]
 	//  * @param startDate  Date Format - "Year-Month-Day", Eg. "2019-01-01"
@@ -437,27 +453,27 @@
 	 * Sets @var totalTrade to whatever trade is
 	 */
 
-	 async function getTradeValue() {
-		const translationObject = {
-			'San Ysidro': 2404,
-			Andrade: 2502,
-			'Calexico East': 2507,
-			'Calexico West': 2503,
-			'Otay Mesa': 2506,
-			Tecate: 2505
-		};
-		/**
-		 * Let's take the selected port names and convert into an array of trade id numbers
-		 */
-		let portNums: number[] = []
-		for (const [key, value] of Object.entries(translationObject)) {
-			portNums = [...portNums, value]
-		};
-		let jsonObj = {functionName : "getTradeValues", ports : portNums, startDate : startDateLuxon, endDate : endDateLuxon}
-		let rows = await (await fetch(URI, { method: 'POST', body: JSON.stringify(jsonObj) })).json();
-		totalTrade = rows;
-		lastTradeDateLuxon = DateTime.fromJSDate(new Date(totalTrade.lastDate));
-	 }
+	//  async function getTradeValue() {
+	// 	const translationObject = {
+	// 		'San Ysidro': 2404,
+	// 		Andrade: 2502,
+	// 		'Calexico East': 2507,
+	// 		'Calexico West': 2503,
+	// 		'Otay Mesa': 2506,
+	// 		Tecate: 2505
+	// 	};
+	// 	/**
+	// 	 * Let's take the selected port names and convert into an array of trade id numbers
+	// 	 */
+	// 	let portNums: number[] = []
+	// 	for (const [key, value] of Object.entries(translationObject)) {
+	// 		portNums = [...portNums, value]
+	// 	};
+	// 	let jsonObj = {functionName : "getTradeValues", ports : portNums, startDate : startDateLuxon, endDate : endDateLuxon}
+	// 	let rows = await (await fetch(URI, { method: 'POST', body: JSON.stringify(jsonObj) })).json();
+	// 	totalTrade = rows;
+	// 	lastTradeDateLuxon = DateTime.fromJSDate(new Date(totalTrade.lastDate));
+	//  }
 	/*************************** END TRADE VALUE SECTION  ****************************/
 
 	/*************************** PORT SELECTION  ****************************/
@@ -507,12 +523,19 @@
 		selectedWaitTimePortName = selectedPortNames[0];
 		let waitTimeClass = new waitTimes(port[0]);
 
-		let { returnObj } = await waitTimeClass.getCurrentWaitTimes();
-		waitTimesObj = returnObj;
+		try {
+			// let { returnObj } = await waitTimeClass.getCurrentWaitTimes();
+			// waitTimesObj = returnObj;
+		} catch (error) {
+			console.log("ERROR!");
+			
+		}
+
+		
+		
 	}
 
 	/*************************** END SELECTION  ****************************/
-
 </script>
 
 <div class="responsiveHeight">
@@ -627,17 +650,17 @@ background: linear-gradient(90deg, rgba(0,242,96,1) 0%, rgba(5,117,230,1) 100%);
 							<div class="w-50">
 								<h6 class="my-0">
 									<b>{startDateLuxon.toFormat('LLL, yyyy')}</b> -
-									{#if maxDateBTS} 
-									<b>{lastBTSDateLuxon.toFormat('LLL, yyyy')}</b>
+									{#if maxDateBTS}
+										<b>{lastBTSDateLuxon.toFormat('LLL, yyyy')}</b>
 									{:else}
-									<b>{endDateLuxon.toFormat('LLL, yyyy')}</b>
+										<b>{endDateLuxon.toFormat('LLL, yyyy')}</b>
 									{/if}
 									{#if maxDateBTS && btsLoaded}
-									<i class="fa-solid fa-circle-info" id="maxDateBTS"></i>
-									<Tooltip target={`maxDateBTS`} placement="right"
-									>Range is limited to the maximum date in this dataset</Tooltip
-								>
-								{/if}
+										<i class="fa-solid fa-circle-info" id="maxDateBTS" />
+										<Tooltip target={`maxDateBTS`} placement="right"
+											>Range is limited to the maximum date in this dataset</Tooltip
+										>
+									{/if}
 								</h6>
 							</div>
 							<div class="w-50">
@@ -648,10 +671,10 @@ background: linear-gradient(90deg, rgba(0,242,96,1) 0%, rgba(5,117,230,1) 100%);
 										<!-- <div class="d-inline-flex align-items-center text-end justify-content-between "> -->
 										<p class="text-end">
 											<b>{previousStartDateLuxon.toFormat('LLL, yyyy')}</b> -
-											{#if maxDateBTS} 
-											<b>{lastBTSDateLuxon.minus({years :1}).toFormat('LLL, yyyy')}</b>
+											{#if maxDateBTS}
+												<b>{lastBTSDateLuxon.minus({ years: 1 }).toFormat('LLL, yyyy')}</b>
 											{:else}
-											<b>{previousEndDateLuxon.toFormat('LLL, yyyy')}</b>
+												<b>{previousEndDateLuxon.toFormat('LLL, yyyy')}</b>
 											{/if}
 										</p>
 										<!-- </div> -->
@@ -809,17 +832,17 @@ background: linear-gradient(90deg, rgba(0,242,96,1) 0%, rgba(5,117,230,1) 100%);
 							<div class="w-50">
 								<h6 class="my-0">
 									<b>{startDateLuxon.toFormat('LLL, yyyy')}</b> -
-									{#if maxDateTrade} 
-									<b><i>{lastTradeDateLuxon.toFormat('LLL, yyyy')}</i></b>
+									{#if maxDateTrade}
+										<b><i>{lastTradeDateLuxon.toFormat('LLL, yyyy')}</i></b>
 									{:else}
-									<b>{endDateLuxon.toFormat('LLL, yyyy')}</b>
+										<b>{endDateLuxon.toFormat('LLL, yyyy')}</b>
 									{/if}
 									{#if maxDateTrade && btsLoaded}
-									<i class="fa-solid fa-circle-info" id="maxDateTrade"></i>
-									<Tooltip target={`maxDateTrade`} placement="right"
-									>Range is limited to the maximum date in this dataset</Tooltip
-								>
-								{/if}
+										<i class="fa-solid fa-circle-info" id="maxDateTrade" />
+										<Tooltip target={`maxDateTrade`} placement="right"
+											>Range is limited to the maximum date in this dataset</Tooltip
+										>
+									{/if}
 								</h6>
 							</div>
 							<div class="w-50">
@@ -830,10 +853,10 @@ background: linear-gradient(90deg, rgba(0,242,96,1) 0%, rgba(5,117,230,1) 100%);
 										<!-- <div class="d-inline-flex align-items-center text-end justify-content-between "> -->
 										<p class="text-end">
 											<b>{previousStartDateLuxon.toFormat('LLL, yyyy')}</b> -
-											{#if maxDateTrade} 
-											<b>{lastTradeDateLuxon.minus({years :1}).toFormat('LLL, yyyy')}</b>
+											{#if maxDateTrade}
+												<b>{lastTradeDateLuxon.minus({ years: 1 }).toFormat('LLL, yyyy')}</b>
 											{:else}
-											<b>{previousEndDateLuxon.toFormat('LLL, yyyy')}</b>
+												<b>{previousEndDateLuxon.toFormat('LLL, yyyy')}</b>
 											{/if}
 										</p>
 										<!-- </div> -->
@@ -885,7 +908,7 @@ background: linear-gradient(90deg, rgba(0,242,96,1) 0%, rgba(5,117,230,1) 100%);
 						</div>
 					</div>
 				</div>
-				<div class="card my-2" style="border: none;">
+				<!-- <div class="card my-2" style="border: none;">
 					<div class="card-body">
 						<div class="d-flex justify-content-between">
 							<div class="d-flex flex-column">
@@ -893,7 +916,7 @@ background: linear-gradient(90deg, rgba(0,242,96,1) 0%, rgba(5,117,230,1) 100%);
 									{#if !btsLoaded}
 										<Moon size="60" color="#c7203b" unit="px" duration="1s" />
 									{:else}
-										${Helper.numberWithCommas(Math.round(totalTrade.totalTrade / 1000000))} M
+										Undefined
 									{/if}
 								</h3>
 								<div class="d-flex d-inline-flex align-items-center">
@@ -925,7 +948,7 @@ background: linear-gradient(90deg, rgba(0,242,96,1) 0%, rgba(5,117,230,1) 100%);
 							{/if}
 						</div>
 					</div>
-				</div>
+				</div> -->
 				<div class="card-footer text-muted" style="font-size: 0.7rem;">
 					<div class="d-flex flex-column">
 						<div class="p-2 bd-highlight">
@@ -1029,7 +1052,7 @@ background: linear-gradient(90deg, rgba(0,242,96,1) 0%, rgba(5,117,230,1) 100%);
 
 <div class="navbar fixed-bottom bg-light text-center">
 	<div class="container-fluid justify-content-center">
-		<span class="text-muted">2022, Smart Border Coalition</span>
+		<span class="text-muted">{CurrentDate.year}, Smart Border Coalition</span>
 	</div>
 </div>
 <div class="responsiveHeight" />

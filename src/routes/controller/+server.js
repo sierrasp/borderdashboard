@@ -2,28 +2,73 @@
 // /** @type {import('@sveltejs/kit').RequestHandler} */
 import { dbHelper } from '$lib/model/dbHelper';
 export async function POST({ request }) {
+
+  const CORS_CONFIG = {
+    allowedOrigins: '*',
+    allowedMethods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
+    allowedHeaders: 'Content-Type, Authorization',
+  };
+
+
+
+  const addHeaders = async (/** @type {Response} */ response) => {
+    response.headers.append('Access-Control-Allow-Origin', CORS_CONFIG.allowedOrigins); 
+    response.headers.append('Access-Control-Allow-Methods', CORS_CONFIG.allowedMethods);
+    
+    response.headers.append('Access-Control-Allow-Headers', CORS_CONFIG.allowedHeaders);
+
+    console.log(response);
+    
+    return response;
+      }
+  const createResponse = async (data) => {
+    const response = new Response(JSON.stringify(data));
+    const HEADERED_RESPONSE = addHeaders(response);
+    return HEADERED_RESPONSE;
+    
+  }
+
+  const createErrorResponse = async (data) => {
+    const response = new Response(String("Error"));
+    const HEADERED_RESPONSE = addHeaders(response);
+    return HEADERED_RESPONSE;
+    
+  }
+
   const params = await request.json();
-  console.log(params);
+
+
     if (params.functionName == "getLastWaitTimes") {
     let rows = await dbHelper.mostRecentByPort(params.ports[0]);
-    console.log(rows);
-    return new Response(String(JSON.stringify(rows)))
+    const response = await createResponse(rows);
+    return response;
     
   };
   if (params.functionName == "getAverageWaitTimes") {
     let rows = await dbHelper.averageWaitTimeByPort(params.ports[0]);
-    return new Response(String(JSON.stringify(rows)))
+    const response = await createResponse(rows);
+    return response;
+
   }
   if (params.functionName == "getTradeValues") {
     let rows = await dbHelper.getTradeValues(params.ports, params.startDate, params.endDate);
-    console.log(rows);
-    return new Response(String(JSON.stringify(rows)))
+    const response = await createResponse(rows);
+    return response;
   }
   if (params.functionName == "getBTSValues") {
     let rows = await dbHelper.getBTSValues(params.measureObj, params.ports, params.startDate, params.endDate);
-    return new Response(String(JSON.stringify(rows)));
+    const response = await createResponse(rows);
+    return response;
+  
   }
-  return new Response(String("Error"))
+  else {
+    const response =  await createErrorResponse();
+    return response;
+  };
+
+
+
+
 
 }
 // export async function POST({params}) {
