@@ -359,6 +359,7 @@
 			startDate: startDateLuxon,
 			endDate: endDateLuxon
 		};
+		// force www?
 		const URI = (dev) ? 'http://localhost:5173/controller/' : 'https://www.borderdashboard.com/controller/'
 		btsObject = await (
 			await fetch(URI, {
