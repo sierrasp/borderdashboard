@@ -438,32 +438,7 @@
 
 	/*************************** TRADE VALUE SECTION  ****************************/
 
-	/**
-	 * Get Total Trade Value for selected date
-	 * Sets @var totalTrade to whatever trade is
-	 */
 
-	//  async function getTradeValue() {
-	// 	const translationObject = {
-	// 		'San Ysidro': 2404,
-	// 		Andrade: 2502,
-	// 		'Calexico East': 2507,
-	// 		'Calexico West': 2503,
-	// 		'Otay Mesa': 2506,
-	// 		Tecate: 2505
-	// 	};
-	// 	/**
-	// 	 * Let's take the selected port names and convert into an array of trade id numbers
-	// 	 */
-	// 	let portNums: number[] = []
-	// 	for (const [key, value] of Object.entries(translationObject)) {
-	// 		portNums = [...portNums, value]
-	// 	};
-	// 	let jsonObj = {functionName : "getTradeValues", ports : portNums, startDate : startDateLuxon, endDate : endDateLuxon}
-	// 	let rows = await (await fetch(URI, { method: 'POST', body: JSON.stringify(jsonObj) })).json();
-	// 	totalTrade = rows;
-	// 	lastTradeDateLuxon = DateTime.fromJSDate(new Date(totalTrade.lastDate));
-	//  }
 	/*************************** END TRADE VALUE SECTION  ****************************/
 
 	/*************************** PORT SELECTION  ****************************/
