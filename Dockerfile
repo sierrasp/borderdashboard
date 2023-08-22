@@ -11,7 +11,7 @@ RUN npm run build
 
 ###
 # Only copy over the Node pieces we need
-# ~> Saves ALMOST 35MB
+# ~> Saves  35MB
 ###
 FROM node:latest
 ENV TZ=America/Los_Angeles
