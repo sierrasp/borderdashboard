@@ -1,5 +1,5 @@
 FROM node:latest
-# install dependencies
+
 WORKDIR /app
 COPY package.json package-lock.json ./
 RUN npm ci
