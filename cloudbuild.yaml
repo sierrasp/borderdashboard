@@ -1,10 +1,10 @@
 steps:
   # Build the container image
   - name: 'gcr.io/cloud-builders/docker'
-    args: ['build', '-t', 'us-west1-docker.pkg.dev/$PROJECT_ID/borderdashboard/$COMMIT_SHA', '.']
+    args: ['build', '-t', 'us-west1-docker.pkg.dev/$PROJECT_ID/borderdashboard/main:latest', '.']
     # Push the container image to Artifacts Registry
   - name: 'gcr.io/cloud-builders/docker'
-    args: ['build', '-t', 'us-west1-docker.pkg.dev/$PROJECT_ID/borderdashboard/$COMMIT_SHA', '.']
+    args: ['build', '-t', 'us-west1-docker.pkg.dev/$PROJECT_ID/borderdashboard/main:latest', '.']
   # Deploy container image to Cloud Run
   - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
     entrypoint: gcloud
@@ -13,8 +13,8 @@ steps:
       - 'deploy'
       - 'borderdashboard'
       - '--image'
-      - 'us-west1-docker.pkg.dev/$PROJECT_ID/borderdashboard/$COMMIT_SHA'
+      - 'us-west1-docker.pkg.dev/$PROJECT_ID/borderdashboard/main:latest'
       - '--region'
       - 'us-west1'
 images:
-  - 'us-west1-docker.pkg.dev/$PROJECT_ID/borderdashboard/$COMMIT_SHA'
+  - 'us-west1-docker.pkg.dev/$PROJECT_ID/borderdashboard/main:latest'
