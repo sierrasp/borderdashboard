@@ -36,7 +36,7 @@ Install Border Dashboard with GitHub
 ```
 ## Deploying 🛠
 
-Deploy Border Dashboard to GCR
+Deploy Border Dashboard to GCR (MANUAL DEPLOYMENT)
 
 ```bash
 docker build -t borderdashboard --platform=linux/amd64 .
@@ -50,5 +50,5 @@ docker push gcr.io/ssp-all-sites/borderdashboard
 Naming conventions based off [Javascript Naming Conventions](https://github.com/ktaranov/naming-convention/blob/master/JavaScript%20Name%20and%20Coding%20Conventions.md)
 
 ## Author ✍️
-Seth
+Seth M.
     
