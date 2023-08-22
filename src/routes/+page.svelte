@@ -368,13 +368,6 @@
 				mode: 'cors',
 			})
 		).json();
-		// btsObject = {
-		// 	Passengers: { currentCount: 46372212, percentChange: -11 },
-		// 	Pedestrians: { currentCount: 12657466, percentChange: -15 },
-		// 	Trucks: { currentCount: 1426702, percentChange: -19 },
-		// 	Vehicles: { currentCount: 28244259, percentChange: -12 },
-		// 	lastDate: '2023-08-10T06:00:00.000Z'
-		// }
 		
 		lastBTSDateLuxon = DateTime.fromJSDate(new Date(btsObject.lastDate));
 		btsLoaded = true;
