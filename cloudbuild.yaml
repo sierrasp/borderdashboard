@@ -1,20 +1,45 @@
 steps:
-  # Build the container image
-  - name: 'gcr.io/cloud-builders/docker'
-    args: ['build', '-t', 'us-west1-docker.pkg.dev/$PROJECT_ID/borderdashboard/main:latest', '.']
-    # Push the container image to Artifacts Registry
-  - name: 'gcr.io/cloud-builders/docker'
-    args: ['build', '-t', 'us-west1-docker.pkg.dev/$PROJECT_ID/borderdashboard/main:latest', '.']
-  # Deploy container image to Cloud Run
-  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
-    entrypoint: gcloud
+  - name: gcr.io/cloud-builders/docker
     args:
-      - 'run'
-      - 'deploy'
-      - 'borderdashboard'
-      - '--image'
-      - 'us-west1-docker.pkg.dev/$PROJECT_ID/borderdashboard/main:latest'
-      - '--region'
-      - 'us-west1'
+      - build
+      - '--no-cache'
+      - '-t'
+      - 'us-west1-docker.pkg.dev/ssp-all-sites/borderdashboard/main:$COMMIT_SHA'
+      - .
+      - '-f'
+      - Dockerfile
+    id: Build
+  - name: gcr.io/cloud-builders/docker
+    args:
+      - push
+      - 'us-west1-docker.pkg.dev/ssp-all-sites/borderdashboard/main:$COMMIT_SHA'
+    id: Push
+  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk:slim'
+    args:
+      - run
+      - services
+      - update
+      - $_SERVICE_NAME
+      - '--platform=managed'
+      - >-
+        --image=us-west1-docker.pkg.dev/ssp-all-sites/borderdashboard/main:$COMMIT_SHA
+      - >-
+        --labels=managed-by=gcp-cloud-build-deploy-cloud-run,commit-sha=$COMMIT_SHA,gcb-build-id=$BUILD_ID,gcb-trigger-id=$_TRIGGER_ID
+      - '--region=$_DEPLOY_REGION'
+      - '--quiet'
+    id: Deploy
+    entrypoint: gcloud
 images:
-  - 'us-west1-docker.pkg.dev/$PROJECT_ID/borderdashboard/main:latest'
+  - 'us-west1-docker.pkg.dev/ssp-all-sites/borderdashboard/main:$COMMIT_SHA'
+options:
+  substitutionOption: ALLOW_LOOSE
+substitutions:
+  _SERVICE_NAME: borderdashboard
+  _DEPLOY_REGION: us-west1
+  _AR_HOSTNAME: us-west1-docker.pkg.dev
+  _PLATFORM: managed
+  _TRIGGER_ID: 517c6c6d-d97a-4a74-a73c-74df67a7f0f0
+tags:
+  - gcp-cloud-build-deploy-cloud-run
+  - gcp-cloud-build-deploy-cloud-run-managed
+  - borderdashboard
