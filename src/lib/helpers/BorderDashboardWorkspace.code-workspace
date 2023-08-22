@@ -1,0 +1,14 @@
+{
+	"folders": [
+		{
+			"path": "../../../../CBP_Scraper"
+		},
+		{
+			"path": "../../../../BTS_Scraper"
+		},
+		{
+			"path": "../../.."
+		}
+	],
+	"settings": {}
+}

@@ -41,7 +41,7 @@
 		'Calexico East': [250301],
 		Andrade: [250201],
 		Tecate: [250501],
-		'Calexico West': [250302]
+		'Calexico': [250302]
 	};
 	/**
 	 * We want to do everything once the dom has loaded
@@ -51,12 +51,6 @@
 	 * This variable is for the nav bar and the collapse menu if the display is small width
 	 */
 	let isOpen = false;
-
-	/**
-	 * This is the URI for posting to server.js under the controller folder
-	 */
-	const URI =
-		dev == true ? 'http://localhost:5173/controller' : 'https://borderdashboard.com/controller';
 
 	/**
 	 * These are all of the crossing ports for California in numerical form
@@ -365,25 +359,21 @@
 			startDate: startDateLuxon,
 			endDate: endDateLuxon
 		};
-
-		// btsObject = await (
-		// 	await fetch(URI, {
-		// 		method: 'POST',
-		// 		body: JSON.stringify(postOBJ),
-		// 		headers: {
-		// 			'Content-Type': 'application/json',
-		// 			'Access-Control-Allow-Origin': '*',
-
-		// 		}
-		// 	})
-		// ).json();
-		btsObject = {
-			Passengers: { currentCount: 46372212, percentChange: -11 },
-			Pedestrians: { currentCount: 12657466, percentChange: -15 },
-			Trucks: { currentCount: 1426702, percentChange: -19 },
-			Vehicles: { currentCount: 28244259, percentChange: -12 },
-			lastDate: '2023-08-10T06:00:00.000Z'
-		}
+		const URI = (dev) ? 'http://localhost:5173/controller/' : 'https://www.borderdashboard.com/controller/'
+		btsObject = await (
+			await fetch(URI, {
+				method: 'POST',
+				body: JSON.stringify(postOBJ),
+				mode: 'cors',
+			})
+		).json();
+		// btsObject = {
+		// 	Passengers: { currentCount: 46372212, percentChange: -11 },
+		// 	Pedestrians: { currentCount: 12657466, percentChange: -15 },
+		// 	Trucks: { currentCount: 1426702, percentChange: -19 },
+		// 	Vehicles: { currentCount: 28244259, percentChange: -12 },
+		// 	lastDate: '2023-08-10T06:00:00.000Z'
+		// }
 		
 		lastBTSDateLuxon = DateTime.fromJSDate(new Date(btsObject.lastDate));
 		btsLoaded = true;
@@ -524,8 +514,8 @@
 		let waitTimeClass = new waitTimes(port[0]);
 
 		try {
-			// let { returnObj } = await waitTimeClass.getCurrentWaitTimes();
-			// waitTimesObj = returnObj;
+			let { returnObj } = await waitTimeClass.getCurrentWaitTimes();
+			waitTimesObj = returnObj;
 		} catch (error) {
 			console.log("ERROR!");
 			

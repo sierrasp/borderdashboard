@@ -1,13 +1,18 @@
 // import db from '$lib/db';
 // /** @type {import('@sveltejs/kit').RequestHandler} */
 import { dbHelper } from '$lib/model/dbHelper';
+import { dev } from '$app/env';
 export async function POST({ request }) {
 
+
+    const allowedOrigin = (dev) ? 'http://localhost:5173' : 'https://borderdashboard.com/'
   const CORS_CONFIG = {
-    allowedOrigins: '*',
+    allowedOrigins: allowedOrigin,
     allowedMethods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
     allowedHeaders: 'Content-Type, Authorization',
   };
+
+  
 
 
 
@@ -20,6 +25,12 @@ export async function POST({ request }) {
     console.log(response);
     
     return response;
+      }
+
+      if (request.method === 'OPTIONS') {
+        const response = new Response();
+        const HEADERED_RESPONSE = addHeaders(response);
+        return HEADERED_RESPONSE;
       }
   const createResponse = async (data) => {
     const response = new Response(JSON.stringify(data));

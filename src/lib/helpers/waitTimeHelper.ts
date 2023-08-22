@@ -6,7 +6,7 @@ import type { IWaitTime } from './waitTimeHelperTypes';
 export default class waitTimes {
 	portNum = 250401;
 	storageID = '';
-	URI = 'http://localhost:5173/controller';
+	URI = 'http://localhost:5173/controller/';
     //  headers = new Headers({
     //     'Content-Type': 'application/json',
     //     // 'Access-Control-Allow-Origin' : *,
@@ -16,7 +16,7 @@ export default class waitTimes {
 	constructor(portNum: number) {
 		this.portNum = portNum;
 		if (dev == false) {
-			this.URI = 'https://borderdashboard.com/controller';
+			this.URI = 'https://www.borderdashboard.com/controller/';
 		}
 	}
 	async getCurrentWaitTimes() {
@@ -49,12 +49,7 @@ export default class waitTimes {
 					await fetch(this.URI, {
 						method: 'POST',
 						body: JSON.stringify(averageWaitTimeJson),
-                        headers : {
-                            'Content-Type': 'application/json',
-                            'Access-Control-Allow-Origin': 'https:borderdashboard.com/controller',
-
-               
-                        }
+                        mode: 'cors',
 					})
 				).json();
 			console.log(`${lastWaitTimes[0].daterecorded}`);
@@ -179,11 +174,7 @@ export default class waitTimes {
 			await fetch(this.URI, {
 				method: 'POST',
 				body: JSON.stringify(jsonObject),
-				headers: {
-                    'Content-Type': 'application/json',
-                    'Access-Control-Allow-Origin': 'https:borderdashboard.com/controller',
-
-                  },
+                mode: 'cors',
 			})
 		).json();
 		let generalLaneArr: IWaitTime[] = [];
@@ -215,23 +206,23 @@ export default class waitTimes {
 		return arrayFinalObjects;
 	}
 
-	// For now, these are useless
-	store(data: any) {
-		const valueStringified = JSON.stringify(data);
-		localStorage.setItem(this.storageID, valueStringified);
-	}
-	checkStored() {
-		const value = localStorage.getItem(this.storageID);
-		if (value != null) {
-			return true;
-		}
-		return false;
-	}
-	retrieveStored() {
-		if (this.checkStored() == true) {
-			const storedData = localStorage.getItem(this.storageID);
-			const rows = JSON.parse(storedData || '{}');
-			return rows;
-		}
-	}
+	// // For now, these are useless
+	// store(data: any) {
+	// 	const valueStringified = JSON.stringify(data);
+	// 	localStorage.setItem(this.storageID, valueStringified);
+	// }
+	// checkStored() {
+	// 	const value = localStorage.getItem(this.storageID);
+	// 	if (value != null) {
+	// 		return true;
+	// 	}
+	// 	return false;
+	// }
+	// retrieveStored() {
+	// 	if (this.checkStored() == true) {
+	// 		const storedData = localStorage.getItem(this.storageID);
+	// 		const rows = JSON.parse(storedData || '{}');
+	// 		return rows;
+	// 	}
+	// }
 }
