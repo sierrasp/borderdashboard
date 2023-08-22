@@ -5,7 +5,7 @@ import { dev } from '$app/env';
 export async function POST({ request }) {
 
 
-    const allowedOrigin = (dev) ? 'http://localhost:5173' : 'https://borderdashboard.com/'
+    const allowedOrigin = (dev) ? 'http://localhost:5173' : 'https://www.borderdashboard.com/'
   const CORS_CONFIG = {
     allowedOrigins: allowedOrigin,
     allowedMethods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
