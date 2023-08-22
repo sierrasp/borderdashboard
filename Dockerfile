@@ -1,4 +1,4 @@
-FROM node:18-bullseye
+FROM node:latest
 # install dependencies
 WORKDIR /app
 COPY package.json package-lock.json ./
@@ -13,7 +13,7 @@ RUN npm run build
 # Only copy over the Node pieces we need
 # ~> Saves 35MB
 ###
-FROM node:18-bullseye
+FROM node:latest
 ENV TZ=America/Los_Angeles
 WORKDIR /app
 COPY --from=0 /app .
