@@ -36,7 +36,7 @@ Install Border Dashboard with GitHub
 ```
 ## Deploying 🛠
 
-Deploy Border Dashboard to GCR
+Deploy Border Dashboard to GCR (MANUAL DEPLOYMENT)
 
 ```bash
 docker build -t borderdashboard --platform=linux/amd64 .
