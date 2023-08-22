@@ -7,12 +7,6 @@ export default class waitTimes {
 	portNum = 250401;
 	storageID = '';
 	URI = 'http://localhost:5173/controller/';
-    //  headers = new Headers({
-    //     'Content-Type': 'application/json',
-    //     // 'Access-Control-Allow-Origin' : *,
-    //     'Access-Control-Allow-Methods': 'POST',
-    //     'Access-Control-Allow-Headers': 'Content-Type'
-    //   });
 	constructor(portNum: number) {
 		this.portNum = portNum;
 		if (dev == false) {
