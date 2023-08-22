@@ -372,7 +372,6 @@
 		lastBTSDateLuxon = DateTime.fromJSDate(new Date(btsObject.lastDate));
 		btsLoaded = true;
 	}
-	//
 	// /**
 
 	//  * @property Possible Measures - ["Pedestrians", "Trains", "Buses", "Personal Vehicle Passengers", "Personal Vehicles", "Trucks", "Train Passengers", "Bus Passengers"]
