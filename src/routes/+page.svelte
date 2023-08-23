@@ -510,7 +510,7 @@
 			</div></NavbarBrand
 		>
 		<NavbarBrand style="position: absolute; left: 50%;  transform: translateX(-50%);" href="/">
-			<h1>Cali-Baja Border Dashboard</h1></NavbarBrand
+			<h1>Cali/Baja Border Dashboard</h1></NavbarBrand
 		>
 		<NavbarToggler on:click={() => (isOpen = !isOpen)} />
 
