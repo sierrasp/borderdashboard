@@ -25,7 +25,6 @@ To deploy this project run
   npm run dev
 ```
 
-
 ## Installation 🛠
 
 Install Border Dashboard with GitHub
